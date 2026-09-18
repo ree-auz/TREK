@@ -31,11 +31,15 @@ AMAP_JS_KEY=replace_with_your_js_api_key
 AMAP_JS_SECURITY_CODE=replace_with_your_js_security_code
 # Leave unset for local testing; set only after the proxy is configured:
 # AMAP_JS_SECURITY_SERVICE_HOST=/_AMapService
+# Required only when accessing TREK over plain HTTP locally; omit it when using HTTPS.
+COOKIE_SECURE=false
 # Optional; defaults to UTC. Set an IANA timezone for local logs and scheduled tasks.
 TZ=UTC
 ```
 
 For `npm run dev`, put these variables in `server/.env`; see [server/.env.example](server/.env.example). The root `.env` is for Docker deployment and is not synchronized with `server/.env`. Restart the development server after changing variables, or recreate the Docker container so Compose loads the new values.
+
+`COOKIE_SECURE=false` allows login sessions to work when testing over plain `http://localhost:3000`. Remove it when the deployment is served over HTTPS so session cookies keep their secure default.
 
 In this mode, `AMAP_JS_SECURITY_CODE` is still sent to the browser for the JS API and can be inspected by visitors. `AMAP_WEB_KEY` remains server-only. Do not set `AMAP_JS_SECURITY_SERVICE_HOST` until the proxy exists, or requests will be sent to a missing endpoint.
 
