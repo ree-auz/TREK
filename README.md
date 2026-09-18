@@ -31,7 +31,8 @@ AMAP_JS_KEY=replace_with_your_js_api_key
 AMAP_JS_SECURITY_CODE=replace_with_your_js_security_code
 # Leave unset for local testing; set only after the proxy is configured:
 # AMAP_JS_SECURITY_SERVICE_HOST=/_AMapService
-TZ=Asia/Shanghai
+# Optional; defaults to UTC. Set an IANA timezone for local logs and scheduled tasks.
+TZ=UTC
 ```
 
 For `npm run dev`, put these variables in `server/.env`; see [server/.env.example](server/.env.example). The root `.env` is for Docker deployment and is not synchronized with `server/.env`. Restart the development server after changing variables, or recreate the Docker container so Compose loads the new values.
