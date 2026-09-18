@@ -224,6 +224,29 @@ describe('plan mapping', () => {
 });
 
 describe('quirk repairs (DI fold fix pass)', () => {
+  it('falls back to Transitous when configured Amap fails', async () => {
+    const amap = { enabled: () => true, plan: vi.fn().mockRejectedValue(new Error('quota')) };
+    const places = { enabled: () => false };
+    const routed = new TransitService(amap as never, places as never, { resolve: () => 'amap' } as never);
+    fetchMock.mockResolvedValueOnce(okJson({ itineraries: [] }));
+    await expect(routed.plan({ from: '39.9042,116.4074', to: '39.91,116.46', tripId: 1 }, 1)).resolves.toEqual({
+      source: 'transitous', fallbackUsed: true, itineraries: [],
+    });
+    expect(amap.plan).toHaveBeenCalledOnce();
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/api/v6/plan?');
+  });
+
+  it('keeps legacy Transitous behavior when Amap is not configured', async () => {
+    const amap = { enabled: vi.fn().mockReturnValue(false), plan: vi.fn() };
+    const routed = new TransitService(amap as never, { enabled: () => false } as never);
+    fetchMock.mockResolvedValueOnce(okJson({ itineraries: [] }));
+    const result = await routed.plan({ from: '52.5,13.4', to: '52.51,13.41', modes: 'BUS' });
+    expect(amap.plan).not.toHaveBeenCalled();
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/api/v6/plan?');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('transitModes=BUS');
+    expect(result).toMatchObject({ source: 'transitous', fallbackUsed: false });
+  });
+
   it('TRANSIT-SVC-012: upstream requests carry an abort-timeout signal', async () => {
     fetchMock.mockResolvedValueOnce(okJson([]));
     await svc.geocode('timeout-probe-station');

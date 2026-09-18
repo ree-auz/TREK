@@ -88,7 +88,8 @@ const places: TranslationStrings = {
   'places.loadingDetails': 'Yer ayrıntıları yükleniyor…',
   'places.osmHint':
     'OpenStreetMap aramasını kullanma (fotoğraf, açılış saatleri veya derecelendirme yok). Tüm ayrıntılar için ayarlara bir Google API anahtarı ekleyin.',
-  'places.osmActive': 'OpenStreetMap kullanılıyor. Google API anahtarı puan ve çalışma saatleri ekler.',
+'places.osmActive': 'OpenStreetMap kullanılıyor. Google API anahtarı puan ve çalışma saatleri ekler.',
+  'places.amapActive': 'Using Amap for mainland China place search.',
   'places.details.title': 'Yer ayrıntıları',
   'places.details.empty': 'Görseller ve açıklama için bir arama sonucu seç.',
   'places.details.loading': 'Ayrıntılar yükleniyor...',
@@ -102,7 +103,8 @@ const places: TranslationStrings = {
   'places.details.facts': 'Bilmekte fayda var',
   'places.details.nothing': 'Bu yer için bir şey bulunamadı.',
   'places.details.noKeyTitle': 'Daha fazla ayrıntı mevcut',
-  'places.details.noKeyHint': 'Google API anahtarı olmadan bu örnek yalnızca özgür kaynakları kullanır. Puanlar, açılış saatleri ve fotoğraflar için TREK yöneticinizden bir anahtar eklemesini isteyin.',
+  'places.details.noKeyHint':
+    'Google API anahtarı olmadan bu örnek yalnızca özgür kaynakları kullanır. Puanlar, açılış saatleri ve fotoğraflar için TREK yöneticinizden bir anahtar eklemesini isteyin.',
   'places.details.aboutBrand': 'Zincir hakkında',
   'places.details.aboutBrandNote': 'Bu şubeyi değil, zinciri anlatır.',
   'places.details.fact.rating': 'Puan',

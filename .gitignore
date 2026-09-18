@@ -20,13 +20,17 @@ client/public/icons/*.png
 *.sqlite-wal
 
 # User data
+/data/
+/uploads/
 server/data/*
 server/uploads/
+.codegraph/
 
 # Environment
 .env
 .env.*
 !.env.example
+/.trek-container-env.tmp
 
 # OS files
 .DS_Store
@@ -70,3 +74,6 @@ minio-licence.key
 
 .run
 .full-review
+
+# docs
+docs/TREK_AMAP_FORK_PLAN.md

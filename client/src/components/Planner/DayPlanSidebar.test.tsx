@@ -504,15 +504,13 @@ describe('DayPlanSidebar', () => {
           ],
         },
       },
-      endpoints: [
-        { role: 'from', sequence: 0, name: 'A', code: null, lat: 1, lng: 2, timezone: null, local_date: null, local_time: null },
-        { role: 'to', sequence: 1, name: 'B', code: null, lat: 3, lng: 4, timezone: null, local_date: null, local_time: null },
-      ],
+      endpoints: [],
     }
     const onToggleConnection = vi.fn()
     render(<DayPlanSidebar {...makeDefaultProps({ days: [day], reservations: [res as any], onOpenTransit: vi.fn(), onToggleConnection, visibleConnectionIds: [] })} />)
-    // No map-connections toggle on transit rows — the expander replaces it.
-    expect(screen.queryByTitle(/connections/i)).not.toBeInTheDocument()
+    // The existing transit icon doubles as the map-route toggle; no extra icon is added.
+    await user.click(screen.getByTitle('Show booking routes'))
+    expect(onToggleConnection).toHaveBeenCalledWith(301)
     // Collapsed: no stop names beyond the chips.
     expect(screen.queryByText('Alexanderplatz')).not.toBeInTheDocument()
     await user.click(screen.getByLabelText('Expand'))
@@ -3889,6 +3887,28 @@ describe('DayPlanSidebar', () => {
     expect(onSetRouteProfile).toHaveBeenCalledWith('plugin:ev/eco')
     await user.click(await screen.findByTitle('Change travel mode'))
     expect(contextMenu().getByRole('button', { name: 'EV eco' })).toBeInTheDocument()
+  })
+
+  it('shows Amap-only bicycle profiles without changing the global route picker', async () => {
+    const user = userEvent.setup()
+    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
+    const assignments = {
+      '10': [
+        buildAssignment({ id: 11, day_id: 10, order_index: 0, place: buildPlace({ id: 1, name: 'A', lat: 29.56, lng: 106.55 }) }),
+        buildAssignment({ id: 12, day_id: 10, order_index: 1, place: buildPlace({ id: 2, name: 'B', lat: 29.57, lng: 106.56 }) }),
+      ],
+    }
+    const view = render(<DayPlanSidebar {...makeDefaultProps({ days: [day], assignments, selectedDayId: 10, routeShown: true })} />)
+    await user.click(await screen.findByTitle('Change travel mode'))
+    expect(contextMenu().queryByRole('button', { name: 'Bicycle' })).not.toBeInTheDocument()
+    expect(contextMenu().queryByRole('button', { name: 'E-bike' })).not.toBeInTheDocument()
+
+    view.unmount()
+    seedStore(useTripStore, { trip: buildTrip({ id: 1, geo_provider: 'amap' }) })
+    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], assignments, selectedDayId: 10, routeShown: true })} />)
+    await user.click(await screen.findByTitle('Change travel mode'))
+    expect(contextMenu().getByRole('button', { name: 'Bicycle' })).toBeInTheDocument()
+    expect(contextMenu().getByRole('button', { name: 'E-bike' })).toBeInTheDocument()
   })
 
   it('FE-PLANNER-DAYPLAN-174: the Route toggle of the selected day flips the shared route state', async () => {

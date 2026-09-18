@@ -1,6 +1,7 @@
 services:
   app:
-    image: mauriceboe/trek:latest
+    image: trek-amap:local
+    build: .
     container_name: trek
     read_only: true
     security_opt:
@@ -50,6 +51,11 @@ services:
 #      - MCP_MAX_SESSION_PER_USER=20 # Max concurrent MCP sessions per user (default: 20)
 #      - KITINERARY_EXTRACTOR_PATH= # Optional. Full path to kitinerary-extractor binary. Auto-detected from PATH and /usr/lib/*/libexec/kf6/ when unset.
 #      - UNSPLASH_ACCESS_KEY= # Optional. Unsplash Access Key for trip-cover / place-image search. Without one, TREK uses Unsplash's unauthenticated endpoint, which some datacenter/VPS IPs are blocked from (#1449). Free key at unsplash.com/developers. Can also be set per-admin in Admin > Settings; the env var overrides that.
+      # Optional Amap credentials from the root .env; see README for setup.
+      - AMAP_WEB_KEY=${AMAP_WEB_KEY:-} # Web Service key; server-only.
+      - AMAP_JS_KEY=${AMAP_JS_KEY:-} # Web (JS API) key; sent to the browser.
+      - AMAP_JS_SECURITY_CODE=${AMAP_JS_SECURITY_CODE:-} # Direct browser security code for local testing.
+      - AMAP_JS_SECURITY_SERVICE_HOST=${AMAP_JS_SECURITY_SERVICE_HOST:-} # Leave empty locally; configure the proxy separately before setting this (see README).
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads

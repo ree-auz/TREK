@@ -24,6 +24,7 @@ interface CustomSelectProps {
   style?: React.CSSProperties
   size?: 'sm' | 'md'
   disabled?: boolean
+  ariaLabel?: string
 }
 
 export default function CustomSelect({
@@ -35,6 +36,7 @@ export default function CustomSelect({
   style = {},
   size = 'md',
   disabled = false,
+  ariaLabel,
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -98,6 +100,7 @@ export default function CustomSelect({
       <button
         type="button"
         disabled={disabled}
+        aria-label={ariaLabel}
         onClick={() => { if (!disabled) { setOpen(o => !o); setSearch('') } }}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 8,

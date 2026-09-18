@@ -36,6 +36,7 @@ import {
   type StoredConnections,
 } from '../../utils/connectionsVisibility'
 import { plannedPlaceIds, plannedPlaceIdsForDay } from '../../utils/plannedPlaces'
+import { isDayInAccommodationRange } from '../../utils/dayOrder'
 
 /**
  * Trip planner page logic — the big one. Owns the trip store wiring, addon
@@ -306,12 +307,17 @@ export function useTripPlanner() {
   const autoShowRoute = useCallback(() => {
     setRouteChoice(prev => (prev === null ? true : prev))
   }, [])
+  const [expandedDayIds, setExpandedDayIds] = useState<Set<number> | null>(null)
   // What the planner maps actually draw. The persisted toggle can rehydrate as
   // true while no day is selected yet (trip re-entry resets the selection, and
   // a second click on the day header clears it) — without a day context the
   // per-day transit filter is off, so the map would draw every automated
   // transport in the trip (#2019).
-  const transitRoutesShown = routeShown && selectedDayId != null
+  // Collapsing a day removes its complete plan from the map: both place markers
+  // and any route overlays. Keep the user's route preference intact so expanding
+  // the day restores the route without another click.
+  const selectedDayExpanded = selectedDayId == null || expandedDayIds == null || expandedDayIds.has(selectedDayId)
+  const transitRoutesShown = routeShown && selectedDayId != null && selectedDayExpanded
   const [routeProfile, setRouteProfile] = useState<string>('driving')
   const [fitKey, setFitKey] = useState<number>(0)
   const initialFitTripId = useRef<number | null>(null)
@@ -364,6 +370,25 @@ export function useTripPlanner() {
     () => resolveVisibleConnectionIds(effectiveConnections, routableReservationIds),
     [effectiveConnections, routableReservationIds]
   )
+  // Day collapse is presentation state, so keep the persisted per-reservation
+  // preference unchanged and only filter the copy handed to the map. This must
+  // be evaluated per journey: collapsing day 2 still hides day 2's transport
+  // while day 1 remains selected and expanded.
+  const mapVisibleConnections = useMemo(() => {
+    if (expandedDayIds == null || days.length === 0) return visibleConnections
+    const byId = new globalThis.Map<number, Reservation>(
+      reservations.map(reservation => [reservation.id, reservation] as const),
+    )
+    return visibleConnections.filter(id => {
+      const reservation = byId.get(id)
+      if (!reservation) return false
+      const startDayId = reservation.day_id ?? reservation.end_day_id
+      if (startDayId == null) return true
+      const endDayId = reservation.end_day_id ?? startDayId
+      return days.some(day => expandedDayIds.has(day.id)
+        && isDayInAccommodationRange(day, startDayId, endDayId, days))
+    })
+  }, [visibleConnections, expandedDayIds, days, reservations])
   const allConnectionsShown = effectiveConnections.mode === 'all-except'
   const toggleConnection = useCallback((id: number) => {
     setStoredConnections(prev => toggleConnectionId(prev, alwaysShowRoutesDefault, id))
@@ -430,8 +455,6 @@ export function useTripPlanner() {
   const placesFilter = useTripStore((s) => s.placesFilter)
   const placesCategoryFilter = useTripStore((s) => s.placesCategoryFilter)
 
-  const [expandedDayIds, setExpandedDayIds] = useState<Set<number> | null>(null)
-
   const mapPlaces = useMemo(() => {
     // Build set of place IDs assigned to collapsed days
     const hiddenPlaceIds = new Set<number>()
@@ -482,7 +505,7 @@ export function useTripPlanner() {
     })
   }, [places, placesCategoryFilter, placesFilter, assignments, expandedDayIds, selectedDayId, days, tripAccommodations, reservations])
 
-  const { route, routeSegments, routeVias, routeInfo, setRoute, setRouteInfo, updateRouteForDay } = useRouteCalculation({ assignments } as any, selectedDayId, routeShown, routeProfile, tripAccommodations)
+  const { route, routeSegments, routeVias, routeInfo, setRoute, setRouteInfo, updateRouteForDay } = useRouteCalculation({ assignments } as any, selectedDayId, routeShown && selectedDayExpanded, routeProfile, tripAccommodations)
 
   const handleSelectDay = useCallback((dayId: number | null, skipFit?: boolean) => {
     tripActions.setSelectedDay(dayId)
@@ -887,6 +910,11 @@ export function useTripPlanner() {
       } else {
         const r = await tripActions.addReservation(tripId, data)
         toast.success(t('trip.toast.reservationAdded'))
+        const routeDayId = Number(data.day_id ?? r?.day_id ?? transportModalDayId)
+        if (Number.isFinite(routeDayId)) {
+          tripActions.setSelectedDay(routeDayId)
+          setRouteShown(true)
+        }
         setShowTransportModal(false)
         setEditingTransport(null)
         setTransportModalDayId(null)
@@ -1083,7 +1111,7 @@ export function useTripPlanner() {
     routeShown, setRouteShown, autoShowRoute, transitRoutesShown, routeProfile, setRouteProfile, routeVias, fitKey, setFitKey,
     mobileSidebarOpen, setMobileSidebarOpen, mobilePlanScrollTopRef, mobilePlacesScrollTopRef,
     deletePlaceId, setDeletePlaceId, deletePlaceIds, setDeletePlaceIds,
-    visibleConnections, toggleConnection, allConnectionsShown, toggleAllConnections, mapTransportDetail, setMapTransportDetail,
+    visibleConnections, mapVisibleConnections, toggleConnection, allConnectionsShown, toggleAllConnections, mapTransportDetail, setMapTransportDetail,
     isMobile, isTouch,
     expandedDayIds, setExpandedDayIds, mapPlaces,
     route, routeSegments, routeInfo, setRoute, setRouteInfo, updateRouteForDay,

@@ -33,10 +33,10 @@ vi.mock('../../../../src/components/shared/CustomDateTimePicker', () => ({
 }));
 
 vi.mock('../../../../src/components/shared/CustomSelect', () => ({
-  default: ({ value, onChange, disabled }: {
-    value: string; onChange: (v: string) => void; disabled?: boolean
+  default: ({ value, onChange, disabled, ariaLabel }: {
+    value: string; onChange: (v: string) => void; disabled?: boolean; ariaLabel?: string
   }) => (
-    <select aria-label="currency" value={value} disabled={disabled} onChange={e => onChange(e.target.value)}>
+    <select aria-label={ariaLabel?.toLowerCase().includes('currency') ? 'currency' : 'geoProvider'} value={value} disabled={disabled} onChange={e => onChange(e.target.value)}>
       <option value="EUR">EUR</option>
       <option value="USD">USD</option>
     </select>
@@ -152,6 +152,7 @@ describe('MNewTripSheet', () => {
       start_date: null,
       end_date: null,
       currency: 'USD',
+      geo_provider: 'global',
       day_count: 7,
     }));
     expect(onClose).toHaveBeenCalled();

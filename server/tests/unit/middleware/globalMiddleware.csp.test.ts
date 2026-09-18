@@ -53,6 +53,18 @@ describe('global CSP: the other shipped raster presets (#2180)', () => {
 });
 
 describe('global CSP: script-src', () => {
+  it('allows only the AMap script hosts used by the JSAPI bootstrap and renderer', async () => {
+    const sources = await directiveSources('script-src');
+    expect(sources).toEqual(expect.arrayContaining([
+      'https://webapi.amap.com',
+      'https://restapi.amap.com',
+      'https://jsapi-service.amap.com',
+      'https://mapplugin.amap.com',
+    ]));
+    expect(sources).not.toContain("'unsafe-inline'");
+    expect(sources).not.toContain('https://*.amap.com');
+  });
+
   it("allows 'wasm-unsafe-eval' so the WASM decoders keep running", async () => {
     expect(await directiveSources('script-src')).toContain("'wasm-unsafe-eval'");
   });

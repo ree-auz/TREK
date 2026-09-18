@@ -76,7 +76,7 @@ export class MapsController {
     @Query('lang') lang?: string,
   ): Promise<MapsSearchResult> {
     try {
-      return await this.maps.search(user.id, body.query, lang, body.locationBias);
+      return await this.maps.search(user.id, body.query, lang, body.locationBias, body.tripId);
     } catch (err: unknown) {
       console.error('Maps search error:', err);
       throw toHttpException(err, 'Search error', 500);
@@ -115,7 +115,7 @@ export class MapsController {
       return { suggestions: [], source: 'disabled' };
     }
     try {
-      return await this.maps.autocomplete(user.id, body.input, body.lang, body.locationBias, body.sessionToken);
+      return await this.maps.autocomplete(user.id, body.input, body.lang, body.locationBias, body.sessionToken, body.tripId);
     } catch (err: unknown) {
       console.error('Maps autocomplete error:', err);
       throw toHttpException(err, 'Autocomplete error', 500);

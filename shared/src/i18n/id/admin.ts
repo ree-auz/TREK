@@ -382,7 +382,8 @@ const admin: TranslationStrings = {
     'Memberi warna pada hari di rencana hari (misalnya bagian perjalanan mana yang memuat suatu hari)',
   'admin.plugins.cap.mcpTools': 'Menerbitkan alat AI',
   'admin.plugins.mcpToolsTitle': 'Alat AI yang diterbitkan',
-  'admin.plugins.mcpToolsHint': 'Asisten dapat menjalankannya atas nama pengguna. Masing-masing bertindak dengan akses yang diberikan di atas.',
+  'admin.plugins.mcpToolsHint':
+    'Asisten dapat menjalankannya atas nama pengguna. Masing-masing bertindak dengan akses yang diberikan di atas.',
   'admin.plugins.perm.mcp:tools':
     'Menerbitkan alat yang dapat dijalankan asisten AI atas nama Anda (bertindak dengan akses yang Anda berikan ke plugin di sini, bukan milik asisten)',
   'admin.plugins.perm.geolocation:read':
@@ -484,7 +485,8 @@ const admin: TranslationStrings = {
   'admin.plugins.changeVersion': 'Ubah versi…',
   'admin.plugins.noVersions': 'Tidak ada versi terpublikasi yang ditemukan di registri.',
   'admin.plugins.downgradeTitle': 'Kembalikan plugin ini?',
-  'admin.plugins.downgradeBody': 'Beralih dari v{from} ke v{to}: data yang ditulis oleh versi yang lebih baru tetap ada, dan versi yang lebih lama mungkin tidak memahaminya.',
+  'admin.plugins.downgradeBody':
+    'Beralih dari v{from} ke v{to}: data yang ditulis oleh versi yang lebih baru tetap ada, dan versi yang lebih lama mungkin tidak memahaminya.',
   'admin.plugins.downgradeConfirm': 'Kembalikan',
   'admin.plugins.updatesHeld': 'Pembaruan dijeda di v{version}',
   'admin.plugins.resumeUpdates': 'Lanjutkan pembaruan',
@@ -580,7 +582,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.airtrail.name': 'AirTrail',
   'admin.addons.catalog.airtrail.description': 'Sinkronkan penerbangan dari instans AirTrail milikmu',
   'admin.addons.catalog.llm_parsing.name': 'Analisis AI',
-  'admin.addons.catalog.llm_parsing.description': 'Membaca pemesanan yang tidak dipahami pengurai bawaan, dengan model AI pilihanmu',
+  'admin.addons.catalog.llm_parsing.description':
+    'Membaca pemesanan yang tidak dipahami pengurai bawaan, dengan model AI pilihanmu',
   'admin.addons.enabled': 'Aktif',
   'admin.addons.disabled': 'Nonaktif',
   'admin.addons.type.trip': 'Perjalanan',
@@ -682,7 +685,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.journey.name': 'Journey',
   'admin.addons.catalog.journey.description': 'Pelacakan perjalanan & jurnal dengan check-in, foto, dan cerita harian',
   'admin.addons.catalog.collections.name': 'Koleksi',
-  'admin.addons.catalog.collections.description': 'Kumpulkan tempat dari perjalanan mana pun ke dalam daftar bernama dan gunakan lagi',
+  'admin.addons.catalog.collections.description':
+    'Kumpulkan tempat dari perjalanan mana pun ke dalam daftar bernama dan gunakan lagi',
   'admin.passkey.title': 'Login dengan passkey',
   'admin.passkey.cardHint': 'Izinkan pengguna masuk dengan passkey (WebAuthn). Nonaktif secara default.',
   'admin.passkey.login': 'Aktifkan login dengan passkey',

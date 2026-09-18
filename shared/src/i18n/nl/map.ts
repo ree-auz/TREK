@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': 'Verbindingen',
   'map.showConnections': 'Boekingsroutes tonen',
   'map.hideConnections': 'Boekingsroutes verbergen',
-  'poi.searchThisArea': 'Dit gebied doorzoeken',
+'poi.searchThisArea': 'Dit gebied doorzoeken',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'Restaurants',
   'poi.cat.cafes': 'Cafés',
   'poi.cat.bars': 'Bars & uitgaan',
@@ -19,7 +23,8 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': 'Satelliet',
   'map.baseLayer.switchToSatellite': 'Overschakelen naar satellietweergave',
   'map.baseLayer.switchToDefault': 'Overschakelen naar kaartweergave',
-  'map.location.denied': 'Locatietoegang is geblokkeerd. Controleer de apparaatinstellingen; een geïnstalleerde app heeft een eigen locatiemachtiging, los van de browser.',
+  'map.location.denied':
+    'Locatietoegang is geblokkeerd. Controleer de apparaatinstellingen; een geïnstalleerde app heeft een eigen locatiemachtiging, los van de browser.',
   'map.location.unavailable': 'Je locatie kon niet worden bepaald.',
   'map.location.timeout': 'Het bepalen van je locatie duurde te lang. Probeer het opnieuw met vrij zicht op de lucht.',
 };

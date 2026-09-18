@@ -24,6 +24,7 @@ import { buildPoiPopupHtml } from './placePopup'
 import { pluginsApi, type PluginMapMarker, type PluginMapLayer } from '../../api/client'
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../../constants/mapDefaults'
 import { computeMapViewport, TILE_SIZE_GL } from '../../utils/mapViewport'
+import type { MapRouteSegment, MapViewProps } from './mapViewProps'
 
 function categoryIconSvg(iconName: string | null | undefined, size: number): string {
   const IconComponent = (iconName && CATEGORY_ICON_MAP[iconName]) || CATEGORY_ICON_MAP['MapPin']
@@ -65,14 +66,6 @@ function buildPlaceClusterData(places: Place[]) {
   }
 }
 
-interface RouteSegment {
-  mid: [number, number]
-  from: [number, number]
-  to: [number, number]
-  walkingText?: string
-  drivingText?: string
-}
-
 // Stable identities for the omitted collection props. An inline `= []` / `= {}`
 // default allocates a fresh object on every render, and these props sit in the
 // dependency arrays of the imperative reconcile effects below — so every render,
@@ -81,47 +74,14 @@ interface RouteSegment {
 // mouseleave never fires" case (#1404).
 const NO_PLACES: Place[] = []
 const NO_ROUTE_VIAS: RouteVia[] = []
-const NO_ROUTE_SEGMENTS: RouteSegment[] = []
+const NO_ROUTE_SEGMENTS: MapRouteSegment[] = []
 const NO_DAY_ORDER: Record<number, number[] | null> = {}
 const NO_RESERVATIONS: Reservation[] = []
 const NO_CONNECTION_IDS: number[] = []
 const NO_POIS: Poi[] = []
 const NO_DAYS: Day[] = []
 
-interface Props {
-  places: Place[]
-  dayPlaces?: Place[]
-  // Enables the plugin map contributions (markers + layers). Absent on surfaces
-  // without a trip (CollectionMap), which naturally excludes them — same rule as
-  // the Leaflet MapPluginMarkers.
-  tripId?: number | string
-  // Charging stops / rest areas a plugin route places on the drawn day route.
-  routeVias?: RouteVia[]
-  route?: [number, number][][] | null
-  routeSegments?: RouteSegment[]
-  selectedPlaceId?: number | null
-  onMarkerClick?: (id: number) => void
-  hoverDisabled?: boolean
-  onMapClick?: (info: { latlng: { lat: number; lng: number } }) => void
-  onMapContextMenu?: ((e: { latlng: { lat: number; lng: number }; originalEvent: MouseEvent | TouchEvent }) => void) | null
-  center?: [number, number]
-  zoom?: number
-  fitKey?: number | null
-  dayOrderMap?: Record<number, number[] | null>
-  leftWidth?: number
-  rightWidth?: number
-  hasInspector?: boolean
-  hasDayDetail?: boolean
-  reservations?: Reservation[]
-  visibleConnectionIds?: number[]
-  showTransitRoutes?: boolean
-  days?: Day[]
-  selectedDayId?: number | null
-  showReservationStats?: boolean
-  onReservationClick?: (reservationId: number) => void
-  pois?: Poi[]
-  onPoiClick?: (poi: Poi) => void
-  onViewportChange?: (bbox: { south: number; west: number; north: number; east: number }) => void
+interface Props extends MapViewProps {
   glProvider?: GlMapProvider
   /**
    * The GL engine, injected instead of imported. Both SDKs used to be pulled in
@@ -130,18 +90,16 @@ interface Props {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   gl: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onMapReady?: (map: any | null) => void
 }
 
 function createMarkerElement(place: Place & { category_color?: string; category_icon?: string }, photoUrl: string | null, orderNumbers: number[] | null, selected: boolean): HTMLDivElement {
-  const size = selected ? 44 : 36
+  const size = selected ? 48 : 40
   // See MapView: allow-listed rather than escaped, because this is a CSS context.
   const borderColor = selected ? '#111827' : safeHexColor(place.category_color, 'white')
-  const borderWidth = selected ? 3 : 2.5
+  const borderWidth = selected ? 4 : 3.5
   const shadow = selected
-    ? '0 0 0 3px rgba(17,24,39,0.25), 0 4px 14px rgba(0,0,0,0.3)'
-    : '0 2px 8px rgba(0,0,0,0.22)'
+    ? '0 0 0 4px rgba(17,24,39,0.32), 0 5px 16px rgba(0,0,0,0.34)'
+    : '0 0 0 2px rgba(17,24,39,0.16), 0 4px 12px rgba(0,0,0,0.28)'
   const bgColor = safeHexColor(place.category_color, '#6b7280')
 
   // The visual circle is `size` + 2*border on each side. To make the
@@ -176,7 +134,7 @@ function createMarkerElement(place: Place & { category_color?: string; category_
   // canvas container. The result looks exactly like "markers drift as the
   // map zooms" because each marker's transform is then applied relative
   // to its stacked slot, not to the map viewport.
-  wrap.style.cssText = `width:${outer}px;height:${outer}px;cursor:pointer;`
+  wrap.style.cssText = `width:${outer}px;height:${outer}px;cursor:pointer;z-index:${selected ? 4 : 3};`
 
   const hasPhoto = photoUrl && (photoUrl.startsWith('data:') || photoUrl.startsWith('/api/maps/place-photo/') || photoUrl.startsWith('/uploads/'))
   if (hasPhoto) {
@@ -400,7 +358,7 @@ function createPoiMarkerElement(category: string): HTMLDivElement {
   const color = cat?.color || '#6b7280'
   const svg = cat ? renderIconMarkup(createElement(cat.Icon, { size: 13, color: 'white', strokeWidth: 2.5 })) : ''
   const el = document.createElement('div')
-  el.style.cssText = 'width:26px;height:26px;cursor:pointer;'
+  el.style.cssText = 'width:26px;height:26px;cursor:pointer;z-index:1;'
   el.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;box-sizing:border-box;">${svg}</div>`
   return el
 }
@@ -476,7 +434,6 @@ export function MapViewGL({
   const containerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef = useRef<Map<number, PlacePin>>(new Map())
   // Own layer for the hand-positioned place pins (MapLibre path, see makePlacePin).
   const pinLayerRef = useRef<HTMLDivElement | null>(null)
@@ -1366,7 +1323,7 @@ export function MapViewGL({
     visibleRouteReservations(reservations, { visibleConnectionIds, showTransitRoutes, selectedDayId, days })
   ), [reservations, visibleConnectionIds, showTransitRoutes, selectedDayId, days])
   // Real road geometry for car/bus/taxi/bicycle bookings (straight line until it loads/if it fails).
-  const transportRoutes = useTransportRoutes(visibleReservations)
+  const transportRoutes = useTransportRoutes(visibleReservations, tripId)
 
   useEffect(() => {
     const map = mapRef.current

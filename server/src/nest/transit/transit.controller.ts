@@ -1,8 +1,11 @@
-import { Controller, Get, HttpException, Query, Req, UseGuards } from '@nestjs/common';
-import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 import { RateLimitService } from '../common/rate-limit.service';
 import { TransitService } from './transit.service';
+import { Controller, Get, HttpException, Query, Req, UseGuards } from '@nestjs/common';
+
+import type { Request } from 'express';
+import type { User } from '../../types';
 
 const RL_WINDOW = 15 * 60 * 1000;
 
@@ -34,25 +37,32 @@ export class TransitController {
 
   @Get('geocode')
   async geocode(
+    @CurrentUser() user: User,
     @Query('q') q: string | undefined,
     @Query('lang') lang: string | undefined,
     @Query('near') near: string | undefined,
+    @Query('tripId') tripId: string | undefined,
     @Req() req: Request,
   ) {
     this.limit('transit_geocode', req, 300);
     try {
-      return await this.transit.geocode(q || '', lang, near);
-    } catch (err) { this.rethrow(err); }
+      return await this.transit.geocode(q || '', lang, near, user.id, tripId ? Number(tripId) : undefined);
+    } catch (err) {
+      this.rethrow(err);
+    }
   }
 
   @Get('plan')
   async plan(
+    @CurrentUser() user: User,
     @Query('from') from: string | undefined,
     @Query('to') to: string | undefined,
     @Query('time') time: string | undefined,
     @Query('arriveBy') arriveBy: string | undefined,
     @Query('modes') modes: string | undefined,
     @Query('maxTransfers') maxTransfers: string | undefined,
+    @Query('strategy') strategy: string | undefined,
+    @Query('tripId') tripId: string | undefined,
     @Req() req: Request,
   ) {
     this.limit('transit_plan', req, 60);
@@ -64,7 +74,11 @@ export class TransitController {
         arriveBy: arriveBy === 'true' || arriveBy === '1',
         modes,
         maxTransfers: maxTransfers !== undefined && maxTransfers !== '' ? Number(maxTransfers) : undefined,
-      });
-    } catch (err) { this.rethrow(err); }
+        strategy: strategy === 'transfers' || strategy === 'walking' ? strategy : 'best',
+        tripId: tripId ? Number(tripId) : undefined,
+      }, user.id);
+    } catch (err) {
+      this.rethrow(err);
+    }
   }
 }

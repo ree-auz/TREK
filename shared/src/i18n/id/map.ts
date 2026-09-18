@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': 'Koneksi',
   'map.showConnections': 'Tampilkan rute pemesanan',
   'map.hideConnections': 'Sembunyikan rute pemesanan',
-  'poi.searchThisArea': 'Cari di area ini',
+'poi.searchThisArea': 'Cari di area ini',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'Restoran',
   'poi.cat.cafes': 'Kafe',
   'poi.cat.bars': 'Bar & hiburan malam',
@@ -19,8 +23,10 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': 'Satelit',
   'map.baseLayer.switchToSatellite': 'Beralih ke tampilan satelit',
   'map.baseLayer.switchToDefault': 'Beralih ke tampilan peta',
-  'map.location.denied': 'Akses lokasi diblokir. Periksa pengaturan perangkat; aplikasi yang terpasang punya izin lokasi sendiri, terpisah dari browser.',
+  'map.location.denied':
+    'Akses lokasi diblokir. Periksa pengaturan perangkat; aplikasi yang terpasang punya izin lokasi sendiri, terpisah dari browser.',
   'map.location.unavailable': 'Lokasi Anda tidak dapat ditentukan.',
-  'map.location.timeout': 'Penentuan lokasi terlalu lama. Coba lagi di tempat dengan pandangan langit yang lebih terbuka.',
+  'map.location.timeout':
+    'Penentuan lokasi terlalu lama. Coba lagi di tempat dengan pandangan langit yang lebih terbuka.',
 };
 export default map;

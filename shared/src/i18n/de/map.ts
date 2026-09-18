@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': 'Verbindungen',
   'map.showConnections': 'Buchungsrouten anzeigen',
   'map.hideConnections': 'Buchungsrouten ausblenden',
-  'poi.searchThisArea': 'Diesen Bereich durchsuchen',
+'poi.searchThisArea': 'Diesen Bereich durchsuchen',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'Restaurants',
   'poi.cat.cafes': 'Cafés',
   'poi.cat.bars': 'Bars & Nachtleben',
@@ -19,8 +23,10 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': 'Satellit',
   'map.baseLayer.switchToSatellite': 'Zur Satellitenansicht wechseln',
   'map.baseLayer.switchToDefault': 'Zur Kartenansicht wechseln',
-  'map.location.denied': 'Der Standortzugriff ist blockiert. Prüfe die Geräteeinstellungen; eine installierte App hat eine eigene Standortberechtigung, unabhängig vom Browser.',
+  'map.location.denied':
+    'Der Standortzugriff ist blockiert. Prüfe die Geräteeinstellungen; eine installierte App hat eine eigene Standortberechtigung, unabhängig vom Browser.',
   'map.location.unavailable': 'Dein Standort konnte nicht ermittelt werden.',
-  'map.location.timeout': 'Die Standortbestimmung hat zu lange gedauert. Versuche es mit freier Sicht zum Himmel erneut.',
+  'map.location.timeout':
+    'Die Standortbestimmung hat zu lange gedauert. Versuche es mit freier Sicht zum Himmel erneut.',
 };
 export default map;

@@ -278,6 +278,19 @@ Booking import can also fall back to an AI model for documents KDE Itinerary can
 
 ---
 
+## Mainland China maps and transit (Amap, optional)
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AMAP_WEB_KEY` | Server-only [Amap Web Service API](https://lbs.amap.com/api/webservice/summary) key. Trips explicitly set to Amap use it for POI and public-transit requests. It is never returned to the browser. | unset |
+| `AMAP_JS_KEY` | Browser-visible Web JS API 2.0 key used to render Trips explicitly set to Amap. This is a different key from `AMAP_WEB_KEY`. | unset |
+| `AMAP_JS_SECURITY_SERVICE_HOST` | Preferred production security proxy URL/path, including the fixed `/_AMapService` suffix. A same-origin path such as `/_AMapService` works with TREK's CSP without adding another trusted origin. | unset |
+| `AMAP_JS_SECURITY_CODE` | Browser-visible JS API security code fallback. Amap documents this plaintext mode as less secure; prefer `AMAP_JS_SECURITY_SERVICE_HOST`. | unset |
+
+TREK keeps its API, stores and database coordinates in WGS84. Server-side Amap providers and the Amap renderer convert at their boundaries; GCJ-02 is not persisted. Existing Trips default to the `global` provider and keep the Leaflet/Mapbox/MapLibre, Google/Nominatim, OSRM and Transitous behavior. Trips explicitly set to Amap use Amap for walking, driving, bicycling and electric-bike day/transport routes; a provider failure falls back to the matching original OSRM profile. An Amap Trip without `AMAP_JS_KEY` safely falls back to Leaflet rendering.
+
+---
+
 ## Public Transit (Transitous)
 
 Public-transit routing in the planner is powered by [Transitous](https://transitous.org/), a free community MOTIS service — no API key is required. See [Transport: Flights, Trains, Cars](Transport-Flights-Trains-Cars) for the feature itself.
@@ -286,7 +299,7 @@ Public-transit routing in the planner is powered by [Transitous](https://transit
 |-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------|
 | `TRANSIT_API_URL` | Base URL of the transit routing API. TREK's server proxies requests to it. Point this at your own self-hosted [MOTIS](https://github.com/motis-project/motis) instance if you want zero third-party egress. A trailing slash is stripped. | `https://api.transitous.org` |
 
-When left at the default, using the transit feature makes the TREK **server** send outbound HTTPS requests to `api.transitous.org` (with an identifying User-Agent, as the Transitous usage policy asks). No transit request is made until a user actually searches for a journey.
+When left at the default, using the transit feature makes the TREK **server** send outbound HTTPS requests to `api.transitous.org` (with an identifying User-Agent, as the Transitous usage policy asks). No transit request is made until a user actually searches for a journey. Trips using the global provider always use Transitous; Trips explicitly set to Amap use Transitous only as the public-transit fallback.
 
 ---
 

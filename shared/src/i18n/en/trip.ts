@@ -45,6 +45,9 @@ const trip: TranslationStrings = {
   'trip.invite.invalid': 'This invite link is invalid or has expired.',
   'trip.invite.backToDashboard': 'Back to dashboard',
   'transit.title': 'Public transit',
+  'dayplan.profileElectrobike': 'E-bike',
+  'transit.source.amap': 'Amap',
+  'transit.fallbackAttribution': 'Amap route unavailable; using Transitous.',
   'transit.from': 'From',
   'transit.to': 'To',
   'transit.searchStop': 'Search stop or station…',
@@ -85,6 +88,6 @@ const trip: TranslationStrings = {
   'transit.durationLabel': 'Duration',
   'transit.transfersLabel': 'Transfers',
   'transit.walkLabel': 'Walking',
-  'transit.searchHint': 'Search real connections and add them straight to the day — data via Transitous.',
+  'transit.searchHint': 'Search real connections and add them straight to the day.',
 };
 export default trip;

@@ -51,7 +51,7 @@ describe('LocalDriver specifics', () => {
     // /app/server/data → /app/data), so this is the deployed shape, not an edge.
     const realdir = tmp();
     const link = path.join(tmp(), 'uploads-link');
-    fs.symlinkSync(realdir, link);
+    fs.symlinkSync(realdir, link, process.platform === 'win32' ? 'junction' : 'dir');
 
     const driver = new LocalDriver({ id: 'sym', root: link });
     driver.init();

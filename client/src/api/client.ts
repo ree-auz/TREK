@@ -9,7 +9,9 @@ import {
   channelTestResultSchema,
   mapsSearchResultSchema, mapsAutocompleteResultSchema, mapsPlaceDetailsResultSchema,
   mapsPlacePhotoResultSchema, mapsReverseResultSchema, mapsResolveUrlResultSchema,
-  mapsPlaceEnrichmentResultSchema,
+  mapsPlaceEnrichmentResultSchema, routePlanResponseSchema,
+  roadRoutePlanResponseSchema, type RoadRoutePlanRequest, type RoadRoutePlanResponse,
+  type RoutePlanResponse,
   type NotificationRespondRequest,
   type SettingUpsertRequest, type SettingsBulkRequest,
   type JourneyCreateRequest, type JourneyAddTripRequest, type JourneyTracksResponse,
@@ -1023,9 +1025,9 @@ export const memoriesApi = {
 }
 
 export const mapsApi = {
-  search: (query: string, lang?: string) => apiClient.post(`/maps/search?lang=${lang || 'en'}`, { query }).then(r => checkInDev(mapsSearchResultSchema, r.data, 'maps.search')),
-  autocomplete: (input: string, lang?: string, locationBias?: { low: { lat: number; lng: number }; high: { lat: number; lng: number } }, signal?: AbortSignal, sessionToken?: string) =>
-      apiClient.post('/maps/autocomplete', { input, lang, locationBias, sessionToken }, { signal }).then(r => checkInDev(mapsAutocompleteResultSchema, r.data, 'maps.autocomplete')),
+  search: (query: string, lang?: string, tripId?: number) => apiClient.post(`/maps/search?lang=${lang || 'en'}`, { query, tripId }).then(r => checkInDev(mapsSearchResultSchema, r.data, 'maps.search')),
+  autocomplete: (input: string, lang?: string, locationBias?: { low: { lat: number; lng: number }; high: { lat: number; lng: number } }, signal?: AbortSignal, sessionToken?: string, tripId?: number) =>
+    apiClient.post('/maps/autocomplete', { input, lang, locationBias, sessionToken, tripId }, { signal }).then(r => checkInDev(mapsAutocompleteResultSchema, r.data, 'maps.autocomplete')),
   details: (placeId: string, lang?: string, sessionToken?: string) => apiClient.get(`/maps/details/${encodeURIComponent(placeId)}`, { params: { lang, sessionToken } }).then(r => checkInDev(mapsPlaceDetailsResultSchema, r.data, 'maps.details')),
   // Pictures and a description for a place that is being looked at but not yet
   // saved. Fans out to several providers server-side, so it takes a signal and
@@ -1221,10 +1223,18 @@ export const shareApi = {
 
 // Public transit routing (#1065) — Transitous/MOTIS proxied through the server.
 export const transitApi = {
-  geocode: (q: string, opts?: { lang?: string; near?: string }) =>
-    apiClient.get('/transit/geocode', { params: { q, lang: opts?.lang, near: opts?.near } }).then(r => r.data),
-  plan: (params: { from: string; to: string; time?: string; arriveBy?: boolean; modes?: string; maxTransfers?: number }) =>
-    apiClient.get('/transit/plan', { params }).then(r => r.data),
+  geocode: (q: string, opts?: { lang?: string; near?: string; tripId?: number }) =>
+    apiClient.get('/transit/geocode', { params: { q, lang: opts?.lang, near: opts?.near, tripId: opts?.tripId } }).then(r => r.data),
+  plan: (params: { from: string; to: string; time?: string; arriveBy?: boolean; modes?: string; maxTransfers?: number; strategy?: 'best' | 'transfers' | 'walking'; tripId?: number }): Promise<RoutePlanResponse> =>
+    apiClient.get('/transit/plan', { params }).then(r => checkInDev(routePlanResponseSchema, r.data, 'transit.plan')),
+}
+
+// Road routing is separate from public transit. Global Trips continue to call
+// the existing OSRM/plugin path directly; this endpoint is the secret-bearing
+// Amap boundary for Trips explicitly configured to use Amap.
+export const routesApi = {
+  plan: (request: RoadRoutePlanRequest): Promise<RoadRoutePlanResponse> =>
+    apiClient.post('/routes/plan', request).then(r => checkInDev(roadRoutePlanResponseSchema, r.data, 'routes.plan')),
 }
 
 // Trip invite links (#1143) — join a trip as an existing, logged-in user.

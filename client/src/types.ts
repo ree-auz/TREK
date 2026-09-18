@@ -131,6 +131,12 @@ export interface Settings {
   maplibre_style?: string
   mapbox_3d_enabled?: boolean
   mapbox_quality_mode?: boolean
+  /** Instance-owned, browser-visible Amap JS API key (not the Web Service key). */
+  amap_js_key?: string
+  /** Preferred production security proxy URL, ending in /_AMapService. */
+  amap_js_security_service_host?: string
+  /** Browser-visible fallback; a security proxy is safer in production. */
+  amap_js_security_code?: string
   // Dashboard widget prefs — persisted server-side so a (docker) upgrade keeps them (#1311).
   dashboard_fx_from?: string
   dashboard_fx_to?: string

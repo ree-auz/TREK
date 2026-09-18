@@ -1,5 +1,3 @@
-import { describe, it, expect } from 'vitest';
-
 import {
   deriveApp,
   deriveHttp,
@@ -9,12 +7,15 @@ import {
   deriveSmtp,
   deriveMcp,
   derivePlugins,
+  deriveMaps,
   deriveIntegrations,
   deriveBackup,
   deriveNet,
   derivePaths,
   deriveAll,
 } from '../../../src/app-config/derive';
+
+import { describe, it, expect } from 'vitest';
 
 // These tests PIN the exact legacy coercions each derived field replaced.
 // If one fails after an edit, the edit changed runtime behavior — fix the
@@ -205,10 +206,29 @@ describe('derivePlugins', () => {
 describe('deriveIntegrations', () => {
   it('pins unsplash trim, transit base strip + default, overpass timeout', () => {
     expect(deriveIntegrations({ UNSPLASH_ACCESS_KEY: ' key ' }).unsplashAccessKey).toBe('key');
+    expect(deriveIntegrations({ AMAP_WEB_KEY: ' amap-secret ' }).amapWebKey).toBe('amap-secret');
+    expect(deriveIntegrations({}).amapWebKey).toBeUndefined();
     expect(deriveIntegrations({}).transitApiBase).toBe('https://api.transitous.org');
     expect(deriveIntegrations({ TRANSIT_API_URL: 'https://t.example//' }).transitApiBase).toBe('https://t.example');
     expect(deriveIntegrations({}).overpassTimeoutMs).toBe(12000);
     expect(deriveIntegrations({ OVERPASS_TIMEOUT_MS: '-1' }).overpassTimeoutMs).toBe(12000);
+  });
+});
+
+describe('deriveMaps', () => {
+  it('keeps Amap browser credentials separate from the server Web Service key', () => {
+    const maps = deriveMaps({
+      AMAP_JS_KEY: ' js-public ',
+      AMAP_JS_SECURITY_CODE: ' js-security ',
+      AMAP_JS_SECURITY_SERVICE_HOST: 'https://maps.example.com/_AMapService/',
+      AMAP_WEB_KEY: 'server-secret',
+    });
+    expect(maps).toMatchObject({
+      amapJsKey: 'js-public',
+      amapJsSecurityCode: 'js-security',
+      amapJsSecurityServiceHost: 'https://maps.example.com/_AMapService',
+    });
+    expect(maps).not.toHaveProperty('amapWebKey');
   });
 });
 
@@ -245,8 +265,21 @@ describe('deriveAll', () => {
     expect(env.app.port).toBe(4000);
     expect(env.demo.enabled).toBe(true);
     for (const ns of [
-      'app', 'http', 'session', 'demo', 'adminBootstrap', 'oidc', 'smtp', 'mcp',
-      'plugins', 'webauthn', 'integrations', 'backup', 'db', 'paths', 'net',
+      'app',
+      'http',
+      'session',
+      'demo',
+      'adminBootstrap',
+      'oidc',
+      'smtp',
+      'mcp',
+      'plugins',
+      'webauthn',
+      'integrations',
+      'backup',
+      'db',
+      'paths',
+      'net',
     ] as const) {
       expect(env[ns]).toBeDefined();
     }

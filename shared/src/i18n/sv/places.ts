@@ -86,7 +86,8 @@ const places: TranslationStrings = {
   'places.loadingDetails': 'Hämtar information om platsen…',
   'places.osmHint':
     'Använder OpenStreetMap-sökningen (inga bilder, öppettider eller betyg). Lägg till en Google API-nyckel i inställningarna för fullständig information.',
-  'places.osmActive': 'OpenStreetMap används. En Google API-nyckel lägger till betyg och öppettider.',
+'places.osmActive': 'OpenStreetMap används. En Google API-nyckel lägger till betyg och öppettider.',
+  'places.amapActive': 'Using Amap for mainland China place search.',
   'places.details.title': 'Platsdetaljer',
   'places.details.empty': 'Välj ett sökresultat för att se bilder och en beskrivning.',
   'places.details.loading': 'Laddar detaljer...',
@@ -100,7 +101,8 @@ const places: TranslationStrings = {
   'places.details.facts': 'Bra att veta',
   'places.details.nothing': 'Inget hittades för den här platsen.',
   'places.details.noKeyTitle': 'Fler detaljer finns tillgängliga',
-  'places.details.noKeyHint': 'Utan en Google API-nyckel använder den här instansen bara fria källor. Be din TREK-administratör lägga till en för betyg, öppettider och foton.',
+  'places.details.noKeyHint':
+    'Utan en Google API-nyckel använder den här instansen bara fria källor. Be din TREK-administratör lägga till en för betyg, öppettider och foton.',
   'places.details.aboutBrand': 'Om kedjan',
   'places.details.aboutBrandNote': 'Beskriver kedjan, inte det här stället.',
   'places.details.fact.rating': 'Betyg',

@@ -8,7 +8,7 @@ import {
   Globe, Compass, Flag, Navigation, Map,
   Church, Library, Store, Home, Cross,
   Heart, Star, CreditCard, Wifi,
-  Luggage, Backpack, Zap,
+  Luggage, Backpack, Zap, Bath,
   LucideIcon,
 } from 'lucide-react'
 
@@ -22,7 +22,7 @@ export const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   Globe, Compass, Flag, Navigation, Map,
   Church, Library, Store, Home, Cross,
   Heart, Star, CreditCard, Wifi,
-  Luggage, Backpack, Zap,
+  Luggage, Backpack, Zap, Bath,
 }
 
 export const ICON_LABELS: Record<string, string> = {
@@ -36,7 +36,7 @@ export const ICON_LABELS: Record<string, string> = {
   Globe: 'World', Compass: 'Explore', Flag: 'Flag', Navigation: 'Navigation', Map: 'Map',
   Church: 'Church', Library: 'Museum', Store: 'Market', Home: 'Accommodation', Cross: 'Medicine',
   Heart: 'Favorite', Star: 'Top', CreditCard: 'Bank', Wifi: 'Internet',
-  Luggage: 'Luggage', Backpack: 'Backpack', Zap: 'Adventure',
+  Luggage: 'Luggage', Backpack: 'Backpack', Zap: 'Adventure', Bath: 'Restroom',
 }
 
 export function getCategoryIcon(iconName: string | null | undefined): LucideIcon {

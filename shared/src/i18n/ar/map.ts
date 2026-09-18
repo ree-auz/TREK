@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': 'الاتصالات',
   'map.showConnections': 'عرض مسارات الحجوزات',
   'map.hideConnections': 'إخفاء مسارات الحجوزات',
-  'poi.searchThisArea': 'البحث في هذه المنطقة',
+'poi.searchThisArea': 'البحث في هذه المنطقة',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'مطاعم',
   'poi.cat.cafes': 'مقاهٍ',
   'poi.cat.bars': 'حانات وحياة ليلية',
@@ -19,7 +23,8 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': 'قمر صناعي',
   'map.baseLayer.switchToSatellite': 'التبديل إلى عرض القمر الصناعي',
   'map.baseLayer.switchToDefault': 'التبديل إلى عرض الخريطة',
-  'map.location.denied': 'تم حظر الوصول إلى الموقع. تحقق من إعدادات الجهاز؛ فالتطبيق المثبت لديه إذن موقع خاص به منفصل عن المتصفح.',
+  'map.location.denied':
+    'تم حظر الوصول إلى الموقع. تحقق من إعدادات الجهاز؛ فالتطبيق المثبت لديه إذن موقع خاص به منفصل عن المتصفح.',
   'map.location.unavailable': 'تعذر تحديد موقعك.',
   'map.location.timeout': 'استغرق تحديد موقعك وقتًا طويلًا. حاول مرة أخرى تحت سماء مكشوفة.',
 };

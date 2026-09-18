@@ -26,7 +26,7 @@ const { db } = vi.hoisted(() => {
   // day-content tables generateDays/listMembers/deleteTrip touch.
   tmp.exec(`CREATE TABLE trips (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, title TEXT NOT NULL,
     description TEXT, start_date TEXT, end_date TEXT, currency TEXT DEFAULT 'EUR', is_archived INTEGER DEFAULT 0,
-    cover_image TEXT, reminder_days INTEGER DEFAULT 3, feed_token TEXT,
+    cover_image TEXT, reminder_days INTEGER DEFAULT 3, geo_provider TEXT NOT NULL DEFAULT 'global', feed_token TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP);`);
   tmp.exec(`CREATE TABLE trip_members (id INTEGER PRIMARY KEY AUTOINCREMENT, trip_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL, invited_by INTEGER, added_at DATETIME DEFAULT CURRENT_TIMESTAMP);`);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CalendarDays, Car, Compass, Footprints, Hotel, MapPin, Pencil, Plus, RotateCcw,
+  CalendarDays, Car, Compass, Footprints, Hotel, MapPin, Pencil, Plus, RotateCcw, Bike,
   Route as RouteIcon, TramFront, Zap,
 } from 'lucide-react'
 import type { WeatherResult } from '@trek/shared'
@@ -52,11 +52,17 @@ export default function MDaySheet({ planner, shell }: MTripSheetsProps) {
       { key: 'driving', label: t('mobileTrip.profileDriving') },
       { key: 'walking', label: t('mobileTrip.profileWalking') },
     ]
+    if (planner.trip?.geo_provider === 'amap') {
+      opts.push(
+        { key: 'cycling', label: t('reservations.type.bicycle') },
+        { key: 'electrobike', label: t('dayplan.profileElectrobike') },
+      )
+    }
     for (const p of activePlugins) {
       for (const prof of p.routeProfiles ?? []) opts.push({ key: `plugin:${p.id}/${prof.id}`, label: prof.label })
     }
     return opts
-  }, [activePlugins, t])
+  }, [activePlugins, planner.trip?.geo_provider, t])
 
   const isFahrenheit = useSettingsStore(s => s.settings.temperature_unit) === 'fahrenheit'
   const timeFormat = useSettingsStore(s => s.settings.time_format) || '24h'
@@ -345,7 +351,7 @@ export default function MDaySheet({ planner, shell }: MTripSheetsProps) {
                 {routable && (
                   <div className={`flex overflow-hidden rounded-full ${INNER_CLS}`}>
                     {routeProfileOptions.map(p => {
-                      const ProfileIcon = p.key === 'driving' ? Car : p.key === 'walking' ? Footprints : Zap
+                      const ProfileIcon = p.key === 'driving' ? Car : p.key === 'walking' ? Footprints : p.key === 'cycling' || p.key === 'electrobike' ? Bike : Zap
                       const active = planner.routeProfile === p.key
                       return (
                         <button

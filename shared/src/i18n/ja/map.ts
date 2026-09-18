@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': '接続',
   'map.showConnections': '予約ルートを表示',
   'map.hideConnections': '予約ルートを非表示',
-  'poi.searchThisArea': 'このエリアを検索',
+'poi.searchThisArea': 'このエリアを検索',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'レストラン',
   'poi.cat.cafes': 'カフェ',
   'poi.cat.bars': 'バー・ナイトライフ',
@@ -19,7 +23,8 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': '衛星',
   'map.baseLayer.switchToSatellite': '衛星表示に切り替える',
   'map.baseLayer.switchToDefault': '地図表示に切り替える',
-  'map.location.denied': '位置情報へのアクセスがブロックされています。端末の設定を確認してください。インストールしたアプリにはブラウザとは別の位置情報の許可があります。',
+  'map.location.denied':
+    '位置情報へのアクセスがブロックされています。端末の設定を確認してください。インストールしたアプリにはブラウザとは別の位置情報の許可があります。',
   'map.location.unavailable': '現在地を特定できませんでした。',
   'map.location.timeout': '位置情報の取得に時間がかかりすぎました。空がよく見える場所でもう一度お試しください。',
 };

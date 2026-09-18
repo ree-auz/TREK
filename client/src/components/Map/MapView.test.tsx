@@ -612,7 +612,7 @@ describe('MapView clusters and badges', () => {
 describe('MapView explore POIs', () => {
   it('FE-COMP-MAPVIEW-033: renders a pin per POI in its category colour with a name tooltip', () => {
     render(<MapView pois={[buildPoi()]} />)
-    const poiMarker = markersWithZ('500')[0]
+    const poiMarker = markersWithZ('-1000')[0]
     expect(poiMarker).toBeTruthy()
     expect(iconHtmlOf(poiMarker)).toContain('#B45309') // cafe
     expect(poiMarker.textContent).toContain('Café Central')
@@ -622,13 +622,13 @@ describe('MapView explore POIs', () => {
     const onPoiClick = vi.fn()
     const poi = buildPoi({ osm_id: 'node/7' })
     render(<MapView pois={[poi]} onPoiClick={onPoiClick} />)
-    fireEvent.click(markersWithZ('500')[0])
+    fireEvent.click(markersWithZ('-1000')[0])
     expect(onPoiClick).toHaveBeenCalledWith(poi)
   })
 
   it('FE-COMP-MAPVIEW-035: an unknown POI category falls back to grey and draws no glyph', () => {
     render(<MapView pois={[buildPoi({ osm_id: 'node/8', category: 'not-a-category' })]} />)
-    const html = iconHtmlOf(markersWithZ('500')[0])
+    const html = iconHtmlOf(markersWithZ('-1000')[0])
     expect(html).toContain('#6b7280')
     expect(html).not.toContain('<svg')
   })
@@ -640,7 +640,7 @@ describe('MapView explore POIs', () => {
       buildPoi({ osm_id: 'node/11', category: 'museum', lat: 48.3 }),
     ]} />)
     const poiIcons = L.divIcon.mock.calls.filter(c => JSON.stringify((c[0] as { iconSize: number[] }).iconSize) === '[26,26]')
-    expect(markersWithZ('500')).toHaveLength(2)
+    expect(markersWithZ('-1000')).toHaveLength(2)
     expect(poiIcons).toHaveLength(1)
   })
 })

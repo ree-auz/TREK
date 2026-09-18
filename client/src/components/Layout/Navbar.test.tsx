@@ -178,6 +178,17 @@ describe('Navbar', () => {
     expect(screen.queryByRole('button', { name: /share/i })).not.toBeInTheDocument();
   });
 
+  it('opens Trip editing only when the page provides the action', async () => {
+    const user = userEvent.setup();
+    const onEditTrip = vi.fn();
+    const { rerender } = render(<Navbar tripTitle="Kyoto" onEditTrip={onEditTrip} />);
+    await user.click(screen.getByRole('button', { name: /edit trip/i }));
+    expect(onEditTrip).toHaveBeenCalledOnce();
+
+    rerender(<Navbar tripTitle="Kyoto" />);
+    expect(screen.queryByRole('button', { name: /edit trip/i })).not.toBeInTheDocument();
+  });
+
   it('FE-COMP-NAVBAR-022: dark mode toggle shows Moon when light, Sun when dark', () => {
     seedStore(useSettingsStore, { settings: buildSettings({ dark_mode: false }) });
     const { unmount } = render(<Navbar />);

@@ -25,6 +25,7 @@ import VectorBasemap from './VectorBasemap'
 import { useSettingsStore } from '../../store/settingsStore'
 import { MapLayerSwitcher } from './MapLayerSwitcher'
 import { computeMapViewport, TILE_SIZE_RASTER, type ViewportPadding } from '../../utils/mapViewport'
+import type { MapViewProps } from './mapViewProps'
 
 function categoryIconSvg(iconName: string | null | undefined, size: number): string {
   const IconComponent = (iconName && CATEGORY_ICON_MAP[iconName]) || CATEGORY_ICON_MAP['MapPin']
@@ -79,14 +80,14 @@ function createPlaceIcon(place, orderNumbers, isSelected) {
   const cacheKey = `${place.id}:${isSelected}:${place.image_url || ''}:${place.category_color || ''}:${place.category_icon || ''}:${orderNumbers?.join(',') || ''}`
   const cached = iconCache.get(cacheKey)
   if (cached) return cached
-  const size = isSelected ? 44 : 36
+  const size = isSelected ? 48 : 40
   // Allow-listed, not escaped: the value lands in style="…" of a divIcon, where
   // escaping stops the attribute breakout but still permits a CSS url().
   const borderColor = isSelected ? '#111827' : safeHexColor(place.category_color, 'white')
-  const borderWidth = isSelected ? 3 : 2.5
+  const borderWidth = isSelected ? 4 : 3.5
   const shadow = isSelected
-    ? '0 0 0 3px rgba(17,24,39,0.25), 0 4px 14px rgba(0,0,0,0.3)'
-    : '0 2px 8px rgba(0,0,0,0.22)'
+    ? '0 0 0 4px rgba(17,24,39,0.32), 0 5px 16px rgba(0,0,0,0.34)'
+    : '0 0 0 2px rgba(17,24,39,0.16), 0 4px 12px rgba(0,0,0,0.28)'
   const bgColor = safeHexColor(place.category_color, '#6b7280')
 
   // Number badges (bottom-right)
@@ -538,7 +539,7 @@ export const MapView = memo(function MapView({
   onViewportChange,
   tripId,
   routeVias = [],
-}: any) {
+}: MapViewProps) {
   // The caller hands over whatever the user configured; what kind of basemap
   // that is decides which layer draws it. A saved raster template still wins,
   // the default is a vector style.
@@ -548,7 +549,7 @@ export const MapView = memo(function MapView({
       key={`poi-${poi.osm_id}`}
       position={[poi.lat, poi.lng]}
       icon={createPoiIcon(poi.category)}
-      zIndexOffset={500}
+      zIndexOffset={-1000}
       eventHandlers={{ click: () => onPoiClick?.(poi) }}
     >
       <Tooltip direction="top" offset={[0, -10]} opacity={1} className="map-tooltip">{poi.name}</Tooltip>
@@ -558,7 +559,7 @@ export const MapView = memo(function MapView({
     visibleRouteReservations(reservations, { visibleConnectionIds, showTransitRoutes, selectedDayId, days })
   ), [reservations, visibleConnectionIds, showTransitRoutes, selectedDayId, days])
   // Real road geometry for car/bus/taxi/bicycle bookings (straight line until it loads/if it fails).
-  const transportRoutes = useTransportRoutes(visibleReservations)
+  const transportRoutes = useTransportRoutes(visibleReservations, tripId)
   // Dynamic padding: account for sidebars + bottom inspector + day detail panel
   // The chrome overlaying the map (side panels, day detail). Kept as a plain box so both the
   // Leaflet fit options and the opening-camera maths can read the same numbers.

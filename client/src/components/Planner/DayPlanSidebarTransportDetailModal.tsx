@@ -9,6 +9,7 @@ import { useTripStore } from '../../store/tripStore'
 import { formatTime, splitReservationDateTime } from '../../utils/formatters'
 import { RES_ICONS, TRANSPORT_DETAIL_COLORS } from './DayPlanSidebar.constants'
 import type { Reservation } from '../../types'
+import { correctedTransferCount } from '../../utils/transitAlternatives'
 
 interface DayPlanSidebarTransportDetailModalProps {
   transportDetail: Reservation | null
@@ -153,7 +154,7 @@ export function DayPlanSidebarTransportDetailModal({
                     <span>{Math.floor(meta.transit.duration / 3600) > 0 ? `${Math.floor(meta.transit.duration / 3600)} h ${Math.round((meta.transit.duration % 3600) / 60)} min` : t('transit.min', { count: Math.round(meta.transit.duration / 60) })}</span>
                   )}
                   <span className="text-content-faint">·</span>
-                  <span>{meta.transit.transfers > 0 ? t('transit.transfers', { count: meta.transit.transfers }) : t('transit.direct')}</span>
+                  <span>{correctedTransferCount(meta.transit.legs, meta.transit.transfers) > 0 ? t('transit.transfers', { count: correctedTransferCount(meta.transit.legs, meta.transit.transfers) }) : t('transit.direct')}</span>
                   {meta.transit.walk_seconds > 59 && (
                     <>
                       <span className="text-content-faint">·</span>

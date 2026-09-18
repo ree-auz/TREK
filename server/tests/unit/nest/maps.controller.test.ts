@@ -49,14 +49,14 @@ describe('MapsController (parity with the legacy /api/maps route)', () => {
       const search = vi.fn().mockResolvedValue({ places: [], source: 'osm' });
       const res = await makeController({ search }).search(user, { query: 'berlin' }, 'de');
       expect(res).toEqual({ places: [], source: 'osm' });
-      expect(search).toHaveBeenCalledWith(3, 'berlin', 'de', undefined);
+      expect(search).toHaveBeenCalledWith(3, 'berlin', 'de', undefined, undefined);
     });
 
     it('forwards a valid locationBias to the service', async () => {
       const search = vi.fn().mockResolvedValue({ places: [], source: 'osm' });
       const bias = { lat: 1, lng: 2, radius: 5000 };
       await makeController({ search }).search(user, { query: 'x', locationBias: bias }, 'de');
-      expect(search).toHaveBeenCalledWith(3, 'x', 'de', bias);
+      expect(search).toHaveBeenCalledWith(3, 'x', 'de', bias, undefined);
     });
 
     it('maps a service error to its status + message', async () => {
@@ -118,7 +118,7 @@ describe('MapsController (parity with the legacy /api/maps route)', () => {
       const autocomplete = vi.fn().mockResolvedValue({ suggestions: [], source: 'osm' });
       const bias = { low: { lat: 1, lng: 2 }, high: { lat: 3, lng: 4 } };
       await makeController({ autocompleteDisabled: () => false, autocomplete }).autocomplete(user, { input: 'be', lang: 'en', locationBias: bias });
-      expect(autocomplete).toHaveBeenCalledWith(3, 'be', 'en', bias, undefined);
+      expect(autocomplete).toHaveBeenCalledWith(3, 'be', 'en', bias, undefined, undefined);
     });
 
     // Session tokens tie a search's keystrokes and its details lookup into one
@@ -127,7 +127,7 @@ describe('MapsController (parity with the legacy /api/maps route)', () => {
       const autocomplete = vi.fn().mockResolvedValue({ suggestions: [], source: 'google' });
       await makeController({ autocompleteDisabled: () => false, autocomplete })
         .autocomplete(user, { input: 'be', sessionToken: 'abc123' });
-      expect(autocomplete).toHaveBeenCalledWith(3, 'be', undefined, undefined, 'abc123');
+      expect(autocomplete).toHaveBeenCalledWith(3, 'be', undefined, undefined, 'abc123', undefined);
     });
 
     it('maps a service error', async () => {

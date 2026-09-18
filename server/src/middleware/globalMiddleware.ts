@@ -181,7 +181,15 @@ export function applyGlobalMiddleware(
         // means switching client/src/utils/convertHeic.ts over to it and
         // verifying a real .heic upload in a browser, not just deleting the
         // string here.
-        scriptSrc: ["'self'", "'wasm-unsafe-eval'", "'unsafe-eval'"],
+        // AMap's public bootstrap dynamically loads its init module and WebGL
+        // renderer from restapi.amap.com and jsapi-service.amap.com. Without
+        // those script origins the DOM markers initialise, but the base-map
+        // and polyline canvas never render.
+        scriptSrc: [
+          "'self'", "'wasm-unsafe-eval'", "'unsafe-eval'",
+          "https://webapi.amap.com", "https://restapi.amap.com",
+          "https://jsapi-service.amap.com", "https://mapplugin.amap.com"
+        ],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
         connectSrc: [
@@ -207,7 +215,9 @@ export function applyGlobalMiddleware(
           "https://geocoding-api.open-meteo.com", "https://api.frankfurter.dev",
           "https://router.project-osrm.org/route/v1/", "https://routing.openstreetmap.de/",
           "https://api.mapbox.com", "https://*.tiles.mapbox.com", "https://events.mapbox.com",
-          "https://tiles.openfreemap.org"
+          "https://tiles.openfreemap.org",
+          "https://webapi.amap.com", "https://restapi.amap.com",
+          "https://*.amap.com", "https://*.autonavi.com"
         ],
         workerSrc: ["'self'", "blob:"],
         childSrc: ["'self'", "blob:"],

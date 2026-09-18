@@ -1,4 +1,4 @@
-// FE-COMP-POIEXPLORE-001 to FE-COMP-POIEXPLORE-018
+// FE-COMP-POIEXPLORE-001 to FE-COMP-POIEXPLORE-019
 import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { act, renderHook, waitFor } from '@testing-library/react'
@@ -119,7 +119,7 @@ describe('usePoiExplore', () => {
     expect(pois).toHaveBeenCalledTimes(1)
   })
 
-  it('FE-COMP-POIEXPLORE-007: the pill is single-select — a second category replaces the first', async () => {
+  it('FE-COMP-POIEXPLORE-007: categories are independent layers and accumulate until toggled off', async () => {
     const { result } = setup()
     act(() => { result.current.onViewportChange(BBOX) })
     act(() => { result.current.toggle('cafe') })
@@ -127,12 +127,11 @@ describe('usePoiExplore', () => {
 
     pois.mockResolvedValue(response([poi({ osm_id: 'node/2', category: 'bar', name: 'Loos Bar' })]))
     act(() => { result.current.toggle('bar') })
-    // The previous category's markers vanish immediately, before the new results land.
-    expect(result.current.active).toEqual(new Set(['bar']))
-    expect(result.current.pois).toEqual([])
+    expect(result.current.active).toEqual(new Set(['cafe', 'bar']))
+    expect(result.current.pois).toHaveLength(1)
 
-    await waitFor(() => expect(result.current.pois).toHaveLength(1))
-    expect(result.current.pois[0].osm_id).toBe('node/2')
+    await waitFor(() => expect(result.current.pois).toHaveLength(2))
+    expect(result.current.pois.map(item => item.osm_id)).toEqual(['node/1', 'node/2'])
   })
 
   it('FE-COMP-POIEXPLORE-008: panning with a category active marks the results stale', async () => {
@@ -198,7 +197,7 @@ describe('usePoiExplore', () => {
     expect(result.current.errorKeys.has('cafe')).toBe(false)
   })
 
-  it('FE-COMP-POIEXPLORE-014: switching category clears a previous error flag', async () => {
+  it('FE-COMP-POIEXPLORE-014: enabling another category preserves the first layer error', async () => {
     pois.mockRejectedValueOnce(new Error('timeout'))
     const { result } = setup()
     act(() => { result.current.onViewportChange(BBOX) })
@@ -206,7 +205,7 @@ describe('usePoiExplore', () => {
     await waitFor(() => expect(result.current.errorKeys.has('cafe')).toBe(true))
 
     act(() => { result.current.toggle('bar') })
-    expect(result.current.errorKeys.size).toBe(0)
+    expect(result.current.errorKeys).toEqual(new Set(['cafe']))
     await waitFor(() => expect(result.current.pois).toHaveLength(1))
   })
 
@@ -269,5 +268,21 @@ describe('usePoiExplore', () => {
     await act(async () => { d.reject(Object.assign(new Error('canceled'), { name: 'CanceledError' })) })
 
     await waitFor(() => expect(result.current.loadingKeys.size).toBe(0))
+  })
+
+  it('FE-COMP-POIEXPLORE-019: selecting discovery information does not mutate loaded results', async () => {
+    const { result } = setup()
+    act(() => { result.current.onViewportChange(BBOX) })
+    act(() => { result.current.toggle('cafe') })
+    await waitFor(() => expect(result.current.pois).toHaveLength(1))
+
+    const feature = result.current.pois[0]
+    act(() => { result.current.selectFeature(feature) })
+    expect(result.current.selectedFeature).toBe(feature)
+    expect(result.current.pois).toEqual([feature])
+
+    act(() => { result.current.clearSelection() })
+    expect(result.current.selectedFeature).toBeNull()
+    expect(result.current.pois).toEqual([feature])
   })
 })

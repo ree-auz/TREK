@@ -655,7 +655,7 @@ function TransitJourneyCard({ r, days, onOpen, onDelete, canEdit, tripId, contri
       </div>
       {transit && (
         <div style={{ paddingLeft: 44 }}>
-          <TransitLegChips legs={transit.legs} size="md" t={t} />
+          <TransitLegChips legs={transit.legs} selectedLines={transit.selected_lines} size="md" t={t} />
         </div>
       )}
       {r.notes && (

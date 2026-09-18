@@ -9,6 +9,9 @@ uploads
 .github
 **/.env
 **/.env.*
+.trek-container-env.tmp
+server/data
+server/uploads
 *.log
 *.md
 !client/**/*.md

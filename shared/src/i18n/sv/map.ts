@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': 'Anslutningar',
   'map.showConnections': 'Visa bokningsvägar',
   'map.hideConnections': 'Dölj bokningsvägar',
-  'poi.searchThisArea': 'Sök i detta område',
+'poi.searchThisArea': 'Sök i detta område',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'Restauranger',
   'poi.cat.cafes': 'Kaféer',
   'poi.cat.bars': 'Barer och nattliv',
@@ -19,7 +23,8 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': 'Satellit',
   'map.baseLayer.switchToSatellite': 'Byt till satellitvy',
   'map.baseLayer.switchToDefault': 'Byt till kartvy',
-  'map.location.denied': 'Platsåtkomst är blockerad. Kontrollera enhetens inställningar; en installerad app har ett eget platstillstånd, skilt från webbläsaren.',
+  'map.location.denied':
+    'Platsåtkomst är blockerad. Kontrollera enhetens inställningar; en installerad app har ett eget platstillstånd, skilt från webbläsaren.',
   'map.location.unavailable': 'Din plats kunde inte fastställas.',
   'map.location.timeout': 'Platsbestämningen tog för lång tid. Försök igen med friare sikt mot himlen.',
 };

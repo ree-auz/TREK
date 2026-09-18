@@ -194,6 +194,7 @@ export const CATEGORY_OSM_FILTERS: Record<string, string[]> = {
   museum: ['tourism=museum', 'tourism=gallery', 'tourism=artwork', 'amenity=theatre'],
   nature: ['leisure=park', 'leisure=garden', 'natural=beach', 'natural=peak'],
   activity: ['tourism=theme_park', 'tourism=zoo', 'tourism=aquarium', 'leisure=water_park'],
+  toilet: ['amenity=toilets'],
   shopping: ['shop=mall', 'shop=department_store', 'amenity=marketplace'],
   supermarket: ['shop=supermarket', 'shop=convenience'],
 };

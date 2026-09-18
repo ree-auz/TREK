@@ -14,7 +14,6 @@
  * call, which is what keeps the runtime env-mutation semantics the test suite
  * depends on. Zod validation runs once at boot (env.schema.ts), never here.
  */
-import { SUPPORTED_LANGUAGE_CODES } from '@trek/shared';
 import {
   csvList,
   csvListFiltered,
@@ -28,6 +27,7 @@ import {
   resolveSessionTtlMs,
   stripTrailingSlashes,
 } from './parsers';
+import { SUPPORTED_LANGUAGE_CODES } from '@trek/shared';
 
 export type RawEnv = Record<string, string | undefined>;
 
@@ -139,6 +139,12 @@ export function deriveMaps(raw: RawEnv) {
     mapboxToken: raw.MAPBOX_ACCESS_TOKEN || undefined,
     /** CARTO basemap key; without one the tiles come back watermarked (#2054). Public too. */
     cartoKey: raw.CARTO_API_KEY || undefined,
+    /** Public browser key for Amap JS API 2.0; never substitutes for AMAP_WEB_KEY. */
+    amapJsKey: raw.AMAP_JS_KEY?.trim() || undefined,
+    /** Browser-visible fallback security code. A serviceHost proxy is preferred in production. */
+    amapJsSecurityCode: raw.AMAP_JS_SECURITY_CODE?.trim() || undefined,
+    /** Public URL of an operator-managed Amap security proxy, ending in /_AMapService. */
+    amapJsSecurityServiceHost: raw.AMAP_JS_SECURITY_SERVICE_HOST?.replace(/\/+$/, '') || undefined,
   };
 }
 
@@ -231,6 +237,8 @@ export function deriveWebauthn(raw: RawEnv) {
 export function deriveIntegrations(raw: RawEnv) {
   return {
     unsplashAccessKey: raw.UNSPLASH_ACCESS_KEY?.trim(),
+    /** Server-only Amap Web Service credential. Never expose this namespace through app-config APIs. */
+    amapWebKey: raw.AMAP_WEB_KEY?.trim() || undefined,
     transitApiBase: stripTrailingSlashes(raw.TRANSIT_API_URL || 'https://api.transitous.org'),
     overpassUrl: raw.OVERPASS_URL,
     overpassTimeoutMs: positiveNumberOr(raw.OVERPASS_TIMEOUT_MS, 12000),
@@ -239,7 +247,7 @@ export function deriveIntegrations(raw: RawEnv) {
     // get a list and never re-implement the delimiter.
     searchPath: (raw.PATH || raw.Path || '')
       .split(process.platform === 'win32' ? ';' : ':')
-      .map(p => p.trim())
+      .map((p) => p.trim())
       .filter(Boolean),
   };
 }

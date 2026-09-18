@@ -5,7 +5,7 @@ import { getOpenStreetMapUrlForPlace } from './placeOpenStreetMap'
 
 type PlaceLike = Pick<Place | AssignmentPlace, 'name' | 'address' | 'lat' | 'lng' | 'google_place_id' | 'google_ftid'>
 
-export type NavigationAppId = 'google' | 'waze' | 'apple' | 'osm' | 'comaps'
+export type NavigationAppId = 'google' | 'amap' | 'baidu' | 'waze' | 'apple' | 'osm' | 'comaps'
 
 export interface NavigationTarget {
   id: NavigationAppId
@@ -70,6 +70,19 @@ export function getNavigationTargets(
   if (place.lat != null && place.lng != null) {
     const ll = `${place.lat},${place.lng}`
     const q = name ? `q=${encodeURIComponent(name)}&` : ''
+    const amapName = name ? `&name=${encodeURIComponent(name)}` : ''
+    targets.push({
+      id: 'amap',
+      label: '高德地图',
+      url: `https://uri.amap.com/marker?position=${place.lng},${place.lat}${amapName}&src=trek&coordinate=gaode&callnative=1`,
+    })
+    const baiduTitle = name || `${place.lat},${place.lng}`
+    const baiduContent = place.address?.trim() || baiduTitle
+    targets.push({
+      id: 'baidu',
+      label: '百度地图',
+      url: `https://api.map.baidu.com/marker?location=${place.lat},${place.lng}&title=${encodeURIComponent(baiduTitle)}&content=${encodeURIComponent(baiduContent)}&output=html&coord_type=gcj02&src=webapp.trek.app`,
+    })
     targets.push({
       id: 'waze',
       label: 'Waze',

@@ -144,7 +144,14 @@ import type { SsrfResult } from '../../../src/utils/ssrfGuard';
 // flowing exactly as they did for the legacy module.
 const svc = new MapsService(new DatabaseService(db as never), photoCacheStub);
 
+beforeEach(() => {
+  // Host/container configuration must not change the legacy Google/Nominatim
+  // expectations in this suite. Amap routing has its own focused tests.
+  vi.stubEnv('AMAP_WEB_KEY', '');
+});
+
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   mockDbGet.mockReset();
   mockDbGet.mockReturnValue(undefined);
@@ -2536,11 +2543,11 @@ describe('controller-facing wrappers delegate to the folded methods', () => {
     try {
       const circleBias = { lat: 1, lng: 2, radius: 5 };
       await svc.search(3, 'berlin', 'de', circleBias);
-      expect(spies.searchPlaces).toHaveBeenCalledWith(3, 'berlin', 'de', circleBias);
+      expect(spies.searchPlaces).toHaveBeenCalledWith(3, 'berlin', 'de', circleBias, false);
 
       const rectBias = { low: { lat: 1, lng: 2 }, high: { lat: 3, lng: 4 } };
       await svc.autocomplete(3, 'be', 'en', rectBias);
-      expect(spies.autocompletePlaces).toHaveBeenCalledWith(3, 'be', 'en', rectBias, undefined);
+      expect(spies.autocompletePlaces).toHaveBeenCalledWith(3, 'be', 'en', rectBias, undefined, false);
 
       await svc.details(3, 'p1', 'de');
       expect(spies.getPlaceDetails).toHaveBeenCalledWith(3, 'p1', 'de', undefined);

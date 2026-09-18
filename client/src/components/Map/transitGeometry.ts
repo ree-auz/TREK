@@ -1,4 +1,5 @@
 import type { Reservation } from '../../types'
+import { selectTransitAlternatives } from '../../utils/transitAlternatives'
 
 /**
  * Real-path geometry for transit journeys on the map (#1065). MOTIS delivers
@@ -11,6 +12,8 @@ export interface TransitMapSegment {
   coords: [number, number][]
   color: string | null
   walk: boolean
+  mode: string
+  line: string | null
 }
 
 /** Google polyline decoding with a configurable precision (MOTIS uses 6). */
@@ -50,14 +53,42 @@ export function getTransitMapSegments(res: Reservation): TransitMapSegment[] {
   if (typeof meta === 'string') {
     try { meta = JSON.parse(meta) } catch { return [] }
   }
-  const legs = meta?.transit?.legs
+  const rawLegs = meta?.transit?.legs
+  const legs = Array.isArray(rawLegs) ? selectTransitAlternatives(rawLegs, meta?.transit?.selected_lines || {}) : rawLegs
   if (!Array.isArray(legs)) return []
   const out: TransitMapSegment[] = []
   for (const leg of legs) {
-    if (!leg?.geometry || typeof leg.geometry !== 'string') continue
-    const coords = decodePolyline(leg.geometry, typeof leg.geometry_precision === 'number' ? leg.geometry_precision : 6)
+    let coords: [number, number][] = []
+    if (typeof leg?.geometry === 'string') {
+      coords = decodePolyline(leg.geometry, typeof leg.geometry_precision === 'number' ? leg.geometry_precision : 6)
+    }
+    // New transit reservations retain the canonical WGS84 leg endpoints. They
+    // provide a conservative fallback for AMap walking legs whose real response
+    // contains endpoints but no usable steps polyline. Older reservations simply
+    // keep the existing whole-route fallback behavior.
+    if (coords.length < 2 && leg?.mode === 'WALK') {
+      const from = storedPoint(leg.from)
+      const to = storedPoint(leg.to)
+      if (from && to) coords = [from, to]
+    }
     if (coords.length < 2) continue
-    out.push({ coords, color: leg.line_color || null, walk: leg.mode === 'WALK' })
+    out.push({
+      coords,
+      color: leg.line_color || null,
+      walk: leg.mode === 'WALK',
+      mode: String(leg.mode || ''),
+      line: typeof leg.line === 'string' && leg.line.trim() ? leg.line.trim() : null,
+    })
   }
   return out
+}
+
+function storedPoint(value: unknown): [number, number] | null {
+  if (!value || typeof value !== 'object') return null
+  const point = value as { lat?: unknown; lng?: unknown }
+  const lat = Number(point.lat)
+  const lng = Number(point.lng)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return null
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null
+  return [lat, lng]
 }

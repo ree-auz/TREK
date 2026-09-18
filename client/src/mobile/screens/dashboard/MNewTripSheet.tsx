@@ -11,7 +11,7 @@ import { CustomDatePicker } from '../../../components/shared/CustomDateTimePicke
 import CustomSelect from '../../../components/shared/CustomSelect'
 import { currenciesWith, SYMBOLS } from '../../../components/Budget/BudgetPanel.constants'
 import type { DashboardTrip } from '../../../pages/dashboard/dashboardModel'
-import type { Trip, TripCreateRequest } from '@trek/shared'
+import type { Trip, TripCreateRequest, TripGeoProvider } from '@trek/shared'
 import MSheet from '../../components/MSheet'
 import MIconBtn from '../../components/MIconBtn'
 import MListRow from '../../components/MListRow'
@@ -62,6 +62,7 @@ export default function MNewTripSheet({ open, trip, onClose, onSave, onCoverUpda
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [currency, setCurrency] = useState('EUR')
+  const [geoProvider, setGeoProvider] = useState<TripGeoProvider>('global')
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
@@ -80,6 +81,7 @@ export default function MNewTripSheet({ open, trip, onClose, onSave, onCoverUpda
     setStartDate(trip?.start_date || '')
     setEndDate(trip?.end_date || '')
     setCurrency(trip?.currency || defaultCurrency)
+    setGeoProvider(trip?.geo_provider ?? 'global')
     setCoverPreview(trip?.cover_image || null)
     setPendingCoverFile(null)
     setPendingUnsplashUrl(null)
@@ -123,6 +125,7 @@ export default function MNewTripSheet({ open, trip, onClose, onSave, onCoverUpda
         start_date: startDate || null,
         end_date: endDate || null,
         currency,
+        geo_provider: geoProvider,
         ...(!startDate && !endDate && !isEditing ? { day_count: 7 } : {}),
       })
       const created = result ? result.trip : undefined
@@ -308,6 +311,7 @@ export default function MNewTripSheet({ open, trip, onClose, onSave, onCoverUpda
         <div className="mt-2">
           <FieldLabel>{t('dashboard.currency')}</FieldLabel>
           <CustomSelect
+            ariaLabel={t('dashboard.currency')}
             value={currency}
             onChange={v => { if (canEditTrip) setCurrency(String(v)) }}
             disabled={!canEditTrip}
@@ -316,6 +320,23 @@ export default function MNewTripSheet({ open, trip, onClose, onSave, onCoverUpda
             options={currenciesWith(currency).map(c => ({ value: c, label: `${c} (${SYMBOLS[c] || c})` }))}
             style={{ width: '100%', marginTop: 5 }}
           />
+        </div>
+
+        <div className="mt-2">
+          <FieldLabel>{t('dashboard.geoProvider')}</FieldLabel>
+          <CustomSelect
+            ariaLabel={t('dashboard.geoProvider')}
+            value={geoProvider}
+            onChange={v => { if (canEditTrip) setGeoProvider(v as TripGeoProvider) }}
+            disabled={!canEditTrip}
+            size="sm"
+            options={[
+              { value: 'global', label: t('dashboard.geoProviderGlobal') },
+              { value: 'amap', label: t('dashboard.geoProviderAmap') },
+            ]}
+            style={{ width: '100%', marginTop: 5 }}
+          />
+          <p className="mt-1 px-1 font-geist text-[0.625rem] text-m-faint">{t('dashboard.geoProviderHint')}</p>
         </div>
 
         {canUploadCover && (

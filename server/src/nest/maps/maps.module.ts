@@ -1,9 +1,13 @@
-import { Module } from '@nestjs/common';
-import { MapsController } from './maps.controller';
-import { MapsService } from './maps.service';
-import { MapsMcp } from './maps.mcp';
 import { PlacePhotosModule } from '../place-photos/place-photos.module';
 import { StorageModule } from '../storage/storage.module';
+import { AmapPlacesProvider } from './amap-places.provider';
+import { AmapClient } from './amap.client';
+import { MapsController } from './maps.controller';
+import { MapsMcp } from './maps.mcp';
+import { MapsService } from './maps.service';
+import { TripGeoProviderService } from './trip-geo-provider.service';
+import { TRIP_GEO_PROVIDER } from './trip-geo-provider.token';
+import { Module } from '@nestjs/common';
 
 /**
  * Maps / geo domain (L3 leaf module). Registered in AppModule. Exports
@@ -14,7 +18,7 @@ import { StorageModule } from '../storage/storage.module';
 @Module({
   imports: [PlacePhotosModule, StorageModule],
   controllers: [MapsController],
-  providers: [MapsService, MapsMcp],
-  exports: [MapsService],
+  providers: [MapsService, MapsMcp, AmapClient, AmapPlacesProvider, TripGeoProviderService, { provide: TRIP_GEO_PROVIDER, useExisting: TripGeoProviderService }],
+  exports: [MapsService, AmapClient, AmapPlacesProvider, TripGeoProviderService, TRIP_GEO_PROVIDER],
 })
 export class MapsModule {}

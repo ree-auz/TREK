@@ -1,3 +1,73 @@
+# TREK AMap Fork
+
+This repository, [ree-auz/TREK](https://github.com/ree-auz/TREK), is based on [liketrek/TREK](https://github.com/liketrek/TREK) and retains the original project's copyright notices and [AGPL-3.0 license](LICENSE). This fork adds AMap support. The configuration and deployment notes below apply to this fork as of September 18, 2026.
+
+## AMap features in this fork
+
+- Select AMap as the map service when creating or editing a trip, with AMap JS API 2.0 used to render the trip map.
+- Use AMap place search and walking, driving, cycling, electric-bike, and public-transit routing.
+- Keep the original map providers and fallback paths. Configuring AMap keys does not automatically switch every trip to AMap.
+
+## Configure your own AMap keys
+
+Keys are supplied by each deployment. Never place real values in the source code or README, or commit them to GitHub. AMap configuration is currently read from **server environment variables**, not entered on the personal settings page.
+
+| Environment variable | Purpose |
+| --- | --- |
+| `AMAP_WEB_KEY` | AMap Web Service key used by the server for place search and routing. It is not sent to the browser. |
+| `AMAP_JS_KEY` | AMap Web (JS API) key used by the browser to display the map. It is visible in browser requests. |
+| `AMAP_JS_SECURITY_CODE` | Security code paired with the JS API key. It is sent directly to the browser and is suitable for local development. |
+| `AMAP_JS_SECURITY_SERVICE_HOST` | URL of a configured JS API security proxy, such as `/_AMapService`. When set, it takes precedence over sending the security code directly. |
+
+The Web Service key and JS API key are not interchangeable. AMap supports either sending the security code directly or using a server-side proxy. A proxy is recommended for production; see the [official AMap JS API security guide](https://lbs.amap.com/api/javascript-api-v2/guide/abc/jscode). The proxy URL variable is provided by this fork, but TREK **does not create the security proxy automatically**.
+
+### Local development and Docker testing
+
+For local testing, you can send the JS security code directly without first setting up a proxy. For Docker Compose, create `.env` in the repository root and provide your own values (the values below are placeholders):
+
+```dotenv
+AMAP_WEB_KEY=replace_with_your_web_service_key
+AMAP_JS_KEY=replace_with_your_js_api_key
+AMAP_JS_SECURITY_CODE=replace_with_your_js_security_code
+# Leave unset for local testing; set only after the proxy is configured:
+# AMAP_JS_SECURITY_SERVICE_HOST=/_AMapService
+TZ=Asia/Shanghai
+```
+
+For `npm run dev`, put these variables in `server/.env`; see [server/.env.example](server/.env.example). The root `.env` is for Docker deployment and is not synchronized with `server/.env`. Restart the development server after changing variables, or recreate the Docker container so Compose loads the new values.
+
+In this mode, `AMAP_JS_SECURITY_CODE` is still sent to the browser for the JS API and can be inspected by visitors. `AMAP_WEB_KEY` remains server-only. Do not set `AMAP_JS_SECURITY_SERVICE_HOST` until the proxy exists, or requests will be sent to a missing endpoint.
+
+### Production deployment: configure a JS security proxy
+
+Each deployment must configure its own proxy. An existing Nginx installation can be reused:
+
+1. Configure the site domain and HTTPS using the [reverse proxy guide](wiki/Reverse-Proxy.md).
+2. Add the `/_AMapService/` forwarding rule from the [official AMap proxy example](https://lbs.amap.com/api/javascript-api-v2/guide/abc/jscode) to the site's Nginx `server` block. Add the style forwarding rule as well if custom map styles are used. Nginx must attach the JS security code paired with `AMAP_JS_KEY`; keep the real security code only in the server configuration.
+3. Run `nginx -t`, then reload Nginx. For control panels or containerized Nginx, run the equivalent validation and reload there. TREK's `.env` does not inject secrets into Nginx.
+4. Set `AMAP_JS_SECURITY_SERVICE_HOST=/_AMapService` in TREK's `.env`, keep `AMAP_JS_KEY` and `AMAP_WEB_KEY`, and remove or clear `AMAP_JS_SECURITY_CODE`. Run `docker compose up -d app` to recreate the application container.
+5. Open a trip configured for AMap through the public site. In browser developer tools, confirm that requests use `/_AMapService/`, the map and place search work, and the settings endpoint no longer returns the JS security code. The browser will still expose `AMAP_JS_KEY`; this is expected for the JS API.
+
+This repository ships code, configuration documentation, and placeholder examples. Deployments must use their own AMap credentials; publishing the source does not require the maintainer to operate a shared proxy.
+
+## Deploy this fork
+
+After installing Docker and Docker Compose:
+
+1. Clone this repository and switch to the branch or tag containing the AMap changes.
+2. Configure the root `.env` as described above.
+3. Run `docker compose up -d --build` from the repository root. This fork's Compose setup builds `trek-amap:local` from the local source.
+4. Open `http://localhost:3000`. If no administrator credentials were supplied on first start, use `docker compose logs app` to view the generated login information.
+5. Create or edit a trip and select AMap as its map service. Configure a domain, HTTPS, and request-origin restrictions before exposing the instance publicly.
+
+**Back up instance data and runtime configuration before migrating an existing installation.** If a container named `trek` already exists, inspect its mounts and actual environment variables before planning the migration; do not delete it blindly. Keys stored only in the old container environment are not copied into the new Compose container and must be added to the local `.env`.
+
+`data/`, `uploads/`, and real `.env` files are instance data and are not published with the source. `data/.jwt_secret` signs login tokens, while `data/.encryption_key` encrypts saved sensitive settings. Back them up securely and never upload them to GitHub. `.trek-container-env.tmp` is a local temporary file and is not part of a release.
+
+The original project introduction continues below. Its demo site, Docker Hub image, version badges, and release links belong to the **upstream project**, not this fork. In particular, the `mauriceboe/trek` image does not contain these changes; build this fork from source using the steps above.
+
+---
+
 <div align="center">
 
 <picture>
@@ -71,14 +141,14 @@ Most of what follows is an addon an admin switches on or off. Lists, Costs, Docu
 #### 🧭 Planning
 
 - **Day plans**: drag places between days and reorder inside a day, with undo. Notes and bookings drag the same way, and a map marker drops straight onto a day
-- **Maps**: Leaflet, Mapbox GL or MapLibre GL (OpenFreeMap, no token), with clustering, photo markers and route lines. 3D buildings and terrain are Mapbox only
-- **Place search**: Google Places when a key is set (photos, ratings, opening hours), otherwise OpenStreetMap with no key
+- **Maps**: Leaflet, Mapbox GL or MapLibre GL (OpenFreeMap, no token), plus optional Amap Web JS rendering for explicitly selected Trips, with clustering, photo markers and route lines. 3D buildings and terrain are Mapbox only
+- **Place search**: optional Amap Web Service coverage for mainland China, Google Places when a key is set, and OpenStreetMap fallback
 - **Place enrichment**: descriptions, facts, hours and photo candidates from OpenStreetMap, Wikipedia, Wikidata and Wikimedia Commons
 - **POI explore**: pull OpenStreetMap POIs by category for the current viewport over Overpass
 - **Import**: shared Google Maps and Naver Maps lists, plus GPX, KML and KMZ files
 - **Export**: GPX of a trip's places and tracks, and an ICS feed per trip or across all of them
 - **Routes**: auto-sort a day (nearest neighbour then 2-opt, locked stops and hotel anchors stay put), driving, walking or cycling profiles over OSRM, then open it in Google Maps or CoMaps
-- **Public transport**: door-to-door itineraries over Transitous
+- **Routing**: OSRM road routes and Transitous public transport remain the global defaults; explicitly selected Amap Trips can use Amap walking, driving, bicycling, electric-bike and public-transit routes with the original providers as fallbacks
 - **Weather**: 16-day forecast from Open-Meteo, no key. Dates outside that window read the archive for the same date instead
 - **Day notes**: markdown body with an icon and a colour, reordered by drag and drop or moved to another day
 - **Trip dates**: move a trip and the days re-date themselves, either dragging the bookings along or re-anchoring them. Trips also copy and archive

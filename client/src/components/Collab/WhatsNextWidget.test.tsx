@@ -287,6 +287,8 @@ describe('WhatsNextWidget', () => {
 
   it('FE-COMP-WHATSNEXT-015: today past-time event is excluded', () => {
     // If it's not midnight, a past-time event today should not appear
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 8, 18, 12))
     const now = new Date()
     if (now.getHours() > 0) {
       const pastTime = '00:01' // Very early — will be past for most of the day
@@ -302,5 +304,6 @@ describe('WhatsNextWidget', () => {
         expect(screen.queryByText('Early Bird')).toBeNull()
       }
     }
+    vi.useRealTimers()
   })
 })

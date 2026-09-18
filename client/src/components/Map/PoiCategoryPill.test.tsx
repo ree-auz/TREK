@@ -75,4 +75,19 @@ describe('PoiCategoryPill', () => {
     expect(button.style.width).toBe('34px')
     expect((button.parentElement as HTMLElement).style.display).toBe('inline-flex')
   })
+
+  it('keeps a discovered feature auxiliary until the user explicitly adds it', () => {
+    const onAddFeature = vi.fn()
+    const feature = {
+      osm_id: 'amap/B0FF', name: '山城步道', lat: 29.55, lng: 106.56,
+      category: 'sights', poi_type: '风景名胜', address: '重庆市渝中区',
+      website: null, phone: null, opening_hours: null, cuisine: null, source: 'amap' as const,
+    }
+    pill({ selectedFeature: feature, onAddFeature })
+
+    expect(screen.getByTestId('map-discovery-card')).toHaveTextContent('Auxiliary information · AMap')
+    expect(onAddFeature).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByText('Add to trip'))
+    expect(onAddFeature).toHaveBeenCalledWith(feature)
+  })
 })

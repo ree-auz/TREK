@@ -1,15 +1,19 @@
-import { Injectable } from '@nestjs/common';
 import { getAppUrl, readEnv } from '../../app-config';
+import { AmapPlacesProvider } from '../maps/amap-places.provider';
 import { buildUserAgent } from '../maps/maps.helpers';
+import { TRIP_GEO_PROVIDER, type TripGeoProviderResolver } from '../maps/trip-geo-provider.token';
+import { AmapTransitProvider } from './amap-transit.provider';
 import {
   deriveTransitStats,
   SCHEDULED_TRANSIT_MODES,
   type PlanQuery,
+  type RoutePlanResponse,
   type TransitItinerary,
   type TransitLeg,
   type TransitLegStop,
   type TransitPlace,
 } from './transit.helpers';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 
 /**
  * Public transit routing (#1065) backed by Transitous (api.transitous.org), the
@@ -139,14 +143,48 @@ function mapStop(p: MotisPlaceRaw | undefined, kind: 'departure' | 'arrival'): T
 
 @Injectable()
 export class TransitService {
+  constructor(
+    @Optional() private readonly amapTransit: AmapTransitProvider = new AmapTransitProvider(),
+    @Optional() private readonly amapPlaces: AmapPlacesProvider = new AmapPlacesProvider(),
+    @Optional() @Inject(TRIP_GEO_PROVIDER) private readonly tripGeoProvider?: TripGeoProviderResolver,
+  ) {}
+
   /** Station/place search for the from/to pickers. `near` biases results. */
-  async geocode(query: string, language?: string, near?: string): Promise<{ results: TransitPlace[] }> {
+  async geocode(query: string, language?: string, near?: string, userId?: number, tripId?: number): Promise<{ results: TransitPlace[] }> {
     const text = (query || '').trim();
     if (text.length < 2) return { results: [] };
     if (text.length > 200) {
       const e = new Error('Query too long') as Error & { status: number };
       e.status = 400;
       throw e;
+    }
+
+    const parsedBias =
+      near && isCoord(near)
+        ? (() => {
+            const [lat, lng] = near.split(',').map(Number);
+            return { lat, lng };
+          })()
+        : undefined;
+    const preferAmap = userId !== undefined && this.tripGeoProvider?.resolve(userId, tripId) === 'amap';
+    if (preferAmap && this.amapPlaces.enabled()) {
+      try {
+        const places = await this.amapPlaces.search(text, language, parsedBias);
+        const results = places
+          .slice(0, 8)
+          .map((p) => ({
+            name: String(p.name ?? ''),
+            lat: Number(p.lat),
+            lng: Number(p.lng),
+            type: 'PLACE',
+            area: String(p.citycode ?? '') || null,
+          }));
+        if (results.length > 0) return { results };
+      } catch (err) {
+        console.warn(
+          `[Transit] Amap geocode failed; using Transitous: ${err instanceof Error ? err.message : 'provider error'}`,
+        );
+      }
     }
 
     const params = new URLSearchParams({ text });
@@ -177,7 +215,7 @@ export class TransitService {
   }
 
   /** Route search between two coordinates. Returns compact itineraries for the picker. */
-  async plan(q: PlanQuery): Promise<{ itineraries: TransitItinerary[] }> {
+  async plan(q: PlanQuery, userId?: number): Promise<RoutePlanResponse> {
     const bad = (msg: string) => {
       const e = new Error(msg) as Error & { status: number };
       e.status = 400;
@@ -186,6 +224,21 @@ export class TransitService {
     if (!q.from || !isCoord(q.from)) bad('from must be "lat,lng"');
     if (!q.to || !isCoord(q.to)) bad('to must be "lat,lng"');
 
+    let fallbackUsed = false;
+    const preferAmap = userId !== undefined && this.tripGeoProvider?.resolve(userId, q.tripId) === 'amap';
+    // Amap's endpoint plans departures only; preserve Transitous arrive-by semantics.
+    if (preferAmap && !q.arriveBy && this.amapTransit.enabled()) {
+      try {
+        const result = await this.amapTransit.plan(q);
+        if (result.itineraries.length > 0) return result;
+        fallbackUsed = true;
+      } catch (err) {
+        fallbackUsed = true;
+        console.warn(
+          `[Transit] Amap plan failed; using Transitous: ${err instanceof Error ? err.message : 'provider error'}`,
+        );
+      }
+    }
     const params = new URLSearchParams({ fromPlace: q.from, toPlace: q.to, numItineraries: '8' });
 
     if (q.time) {
@@ -214,7 +267,9 @@ export class TransitService {
 
     const key = `plan:${params.toString()}`;
     const cached = cacheGet(key);
-    if (cached) return cached as { itineraries: TransitItinerary[] };
+    if (cached) {
+      return { source: 'transitous', fallbackUsed, itineraries: cached as TransitItinerary[] };
+    }
 
     const raw = (await upstream('/api/v6/plan', params)) as {
       itineraries?: Array<{
@@ -274,8 +329,7 @@ export class TransitService {
       ];
     });
 
-    const data = { itineraries };
-    cacheSet(key, data);
-    return data;
+    cacheSet(key, itineraries);
+    return { source: 'transitous', fallbackUsed, itineraries };
   }
 }

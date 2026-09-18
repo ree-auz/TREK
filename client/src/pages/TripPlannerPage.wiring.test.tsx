@@ -47,8 +47,9 @@ vi.mock('../components/Map/MapCompassPill', () => ({ MapCompassPill: stub('compa
 vi.mock('../components/Map/PoiCategoryPill', () => ({ default: stub('poiPill', 'poi-pill') }))
 vi.mock('../components/Map/usePoiExplore', () => ({
   usePoiExplore: () => ({
-    active: [], pois: [], loadingKeys: [], errorKeys: [], moved: false,
+    active: [], pois: [], selectedFeature: null, loadingKeys: [], errorKeys: [], moved: false,
     toggle: vi.fn(), searchArea: vi.fn(), onViewportChange: vi.fn(),
+    selectFeature: vi.fn(), clearSelection: vi.fn(),
   }),
 }))
 
@@ -332,6 +333,9 @@ describe('TripPlannerPage — shell', () => {
 
     act(() => { props('navbar').onShare() })
     expect(hookState.setShowMembersModal).toHaveBeenCalledWith(true)
+
+    act(() => { props('navbar').onEditTrip() })
+    expect(hookState.setShowTripForm).toHaveBeenCalledWith(true)
   })
 
   it('FE-PAGE-TPW-006: the tab bar renders every tab and forwards a switch to the hook', () => {

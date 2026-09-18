@@ -55,6 +55,9 @@ export interface TransitLeg {
   lineTextColor: string | null;
   agency: string | null;
   intermediateStops: number;
+  stopNodes?: TransitLegStop[];
+  /** Provider segment identity: lines sharing it are alternatives, not transfers. */
+  alternativeGroup?: string;
   /** Encoded polyline of the leg's real path (Google encoding) + its precision. */
   geometry: string | null;
   geometryPrecision: number;
@@ -66,7 +69,16 @@ export interface TransitItinerary {
   duration: number;
   transfers: number;
   walkSeconds: number;
+  distance?: number | null;
   legs: TransitLeg[];
+}
+
+export type RouteSource = 'amap' | 'transitous';
+
+export interface RoutePlanResponse {
+  source: RouteSource;
+  fallbackUsed: boolean;
+  itineraries: TransitItinerary[];
 }
 
 export interface PlanQuery {
@@ -76,6 +88,18 @@ export interface PlanQuery {
   arriveBy?: boolean;
   modes?: string;
   maxTransfers?: number;
+  /** Routing preference; providers translate this to their native strategy. */
+  strategy?: 'best' | 'transfers' | 'walking';
+  tripId?: number;
+}
+
+export interface TransitProvider {
+  readonly id: string;
+  plan(q: PlanQuery): Promise<RoutePlanResponse>;
+}
+
+export function amapStrategy(value: PlanQuery['strategy']): '0' | '2' | '3' {
+  return value === 'transfers' ? '2' : value === 'walking' ? '3' : '0';
 }
 
 export function deriveTransitStats(

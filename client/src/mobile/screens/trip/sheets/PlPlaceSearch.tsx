@@ -61,7 +61,7 @@ function placeToPick(place: MapsPlace): PlSearchPick {
  * detection — the mobile counterpart of PlaceFormModal's search block.
  */
 export default function PlPlaceSearch({ planner, locationBias, onPick, onResolvingChange }: PlPlaceSearchProps) {
-  const { t, language, toast } = planner
+  const { t, language, toast, tripId } = planner
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<MapsPlace[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -85,7 +85,7 @@ export default function PlPlaceSearch({ planner, locationBias, onPick, onResolvi
       const controller = new AbortController()
       abortRef.current = controller
       try {
-        const result = await mapsApi.autocomplete(input, language, locationBias, controller.signal, placesSessionRef.current.current())
+        const result = await mapsApi.autocomplete(input, language, locationBias, controller.signal, placesSessionRef.current.current(), tripId)
         setSuggestions(result.suggestions || [])
       } catch (err: unknown) {
         // Superseded request — axios rejects an aborted call with CanceledError.
@@ -93,7 +93,7 @@ export default function PlPlaceSearch({ planner, locationBias, onPick, onResolvi
         setSuggestions([])
       }
     },
-    [language, locationBias],
+    [language, locationBias, tripId],
   )
 
   // Debounced autocomplete — URLs and coordinate pastes go to the search button.
@@ -147,7 +147,7 @@ export default function PlPlaceSearch({ planner, locationBias, onPick, onResolvi
           return
         }
       }
-      const result = await mapsApi.search(trimmed, language)
+      const result = await mapsApi.search(trimmed, language, tripId)
       setResults(result.places || [])
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, t('places.mapsSearchError')))
@@ -176,7 +176,7 @@ export default function PlPlaceSearch({ planner, locationBias, onPick, onResolvi
       }
       if (!place) {
         const fullQuery = [suggestion.mainText, suggestion.secondaryText].filter(Boolean).join(', ')
-        const search = await mapsApi.search(fullQuery, language)
+        const search = await mapsApi.search(fullQuery, language, tripId)
         place = (search.places?.[0] as MapsPlace | undefined) ?? null
       }
       if (place) {
