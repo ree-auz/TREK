@@ -1664,11 +1664,11 @@ describe('useTripPlanner — bookings and transports', () => {
     expect(actions.loadBudgetItems).toHaveBeenCalledWith(42)
     expect(result.current.showTransportModal).toBe(false)
     expect(result.current.transportModalDayId).toBeNull()
-    expect(result.current.routeShown).toBe(true)
+    expect(result.current.routeShown).toBe(false)
     expect(actions.setSelectedDay).toHaveBeenCalledWith(7)
   })
 
-  it('shows routes immediately after adding an automated transit itinerary', async () => {
+  it('shows a new transit itinerary as a booking route without enabling the day route', async () => {
     seedTrip()
     const { result } = await renderPlanner()
     expect(result.current.routeShown).toBe(false)
@@ -1678,7 +1678,8 @@ describe('useTripPlanner — bookings and transports', () => {
       await result.current.handleSaveTransport({ title: 'Metro', type: 'transit', day_id: 7 })
     })
 
-    expect(result.current.routeShown).toBe(true)
+    expect(result.current.routeShown).toBe(false)
+    expect(result.current.visibleConnections).toContain(9)
     expect(actions.setSelectedDay).toHaveBeenCalledWith(7)
   })
 

@@ -913,7 +913,15 @@ export function useTripPlanner() {
         const routeDayId = Number(data.day_id ?? r?.day_id ?? transportModalDayId)
         if (Number.isFinite(routeDayId)) {
           tripActions.setSelectedDay(routeDayId)
-          setRouteShown(true)
+        }
+        if (r?.id !== undefined) {
+          setStoredConnections(prev => {
+            const base = resolveEffectiveConnections(prev, alwaysShowRoutesDefault)
+            const ids = base.mode === 'only'
+              ? [...new Set([...base.ids, r.id])]
+              : base.ids.filter(id => id !== r.id)
+            return { mode: base.mode, ids }
+          })
         }
         setShowTransportModal(false)
         setEditingTransport(null)
