@@ -44,6 +44,9 @@ const trip: TranslationStrings = {
   'trip.invite.invalid': '此邀请链接无效或已过期。',
   'trip.invite.backToDashboard': '返回仪表盘',
   'transit.title': '公共交通',
+  'dayplan.profileElectrobike': '电动车',
+  'transit.source.amap': '高德地图',
+  'transit.fallbackAttribution': '高德路线不可用，已使用 Transitous',
   'transit.from': '出发地',
   'transit.to': '目的地',
   'transit.searchStop': '搜索站点或车站…',
@@ -84,6 +87,6 @@ const trip: TranslationStrings = {
   'transit.durationLabel': '时长',
   'transit.transfersLabel': '换乘',
   'transit.walkLabel': '步行',
-  'transit.searchHint': '搜索真实班次并直接添加到当天行程 — 数据来自 Transitous。',
+  'transit.searchHint': '搜索真实班次并直接添加到当天行程。',
 };
 export default trip;

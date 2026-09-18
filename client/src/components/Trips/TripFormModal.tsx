@@ -11,7 +11,7 @@ import { useTranslation } from '../../i18n'
 import { CustomDatePicker } from '../shared/CustomDateTimePicker'
 import { normalizeImageFile } from '../../utils/convertHeic'
 import { getApiErrorMessage, type Trip } from '../../types'
-import type { TripCreateRequest } from '@trek/shared'
+import type { TripCreateRequest, TripGeoProvider } from '@trek/shared'
 import { NumericInput } from '../shared/NumericInput'
 import { currenciesWith, SYMBOLS } from '../Budget/BudgetPanel.constants'
 
@@ -58,6 +58,7 @@ export default function TripFormModal({ isOpen, onClose, onSave, trip, onCoverUp
     start_date: '',
     end_date: '',
     currency: 'EUR',
+    geo_provider: 'global' as TripGeoProvider,
     reminder_days: 0 as number,
     day_count: 7 as number | '',
   })
@@ -94,6 +95,7 @@ export default function TripFormModal({ isOpen, onClose, onSave, trip, onCoverUp
         start_date: trip.start_date || '',
         end_date: trip.end_date || '',
         currency: trip.currency || 'EUR',
+        geo_provider: trip.geo_provider ?? 'global',
         reminder_days: rd,
         day_count: trip.day_count || 7,
       })
@@ -101,7 +103,7 @@ export default function TripFormModal({ isOpen, onClose, onSave, trip, onCoverUp
       setCoverPreview(trip.cover_image || null)
       setCoverSearchQuery('')
     } else {
-      setFormData({ title: '', description: '', start_date: '', end_date: '', currency: defaultCurrency, reminder_days: tripRemindersEnabled ? 3 : 0, day_count: 7 })
+      setFormData({ title: '', description: '', start_date: '', end_date: '', currency: defaultCurrency, geo_provider: 'global', reminder_days: tripRemindersEnabled ? 3 : 0, day_count: 7 })
       setCustomReminder(false)
       setCoverPreview(null)
       setCoverSearchQuery('')
@@ -163,6 +165,7 @@ export default function TripFormModal({ isOpen, onClose, onSave, trip, onCoverUp
       start_date: formData.start_date || null,
       end_date: formData.end_date || null,
       currency: formData.currency,
+      geo_provider: formData.geo_provider,
       reminder_days: formData.reminder_days,
       ...(!formData.start_date && !formData.end_date ? { day_count: Number(formData.day_count) } : {}),
     }
@@ -574,6 +577,20 @@ export default function TripFormModal({ isOpen, onClose, onSave, trip, onCoverUp
             options={currenciesWith(formData.currency).map(c => ({ value: c, label: `${c} (${SYMBOLS[c] || c})` }))}
             searchable
           />
+        </div>
+
+        <div>
+          <label className={labelCls}>{t('dashboard.geoProvider')}</label>
+          <CustomSelect
+            value={formData.geo_provider}
+            onChange={v => canEditTrip && update('geo_provider', v as TripGeoProvider)}
+            disabled={!canEditTrip}
+            options={[
+              { value: 'global', label: t('dashboard.geoProviderGlobal') },
+              { value: 'amap', label: t('dashboard.geoProviderAmap') },
+            ]}
+          />
+          <p className="text-caption text-content-faint mt-1.5">{t('dashboard.geoProviderHint')}</p>
         </div>
 
         {/* Reminder — only visible to owner (or when creating) */}

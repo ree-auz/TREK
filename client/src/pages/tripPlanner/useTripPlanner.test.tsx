@@ -827,6 +827,26 @@ describe('useTripPlanner — connection visibility', () => {
     expect(result.current.visibleConnections).toEqual([1])
   })
 
+  it('FE-TP-HOOK-037b: collapsing any day hides only that day\'s transport routes from the map', async () => {
+    setSettings({ map_always_show_routes: true })
+    const day7 = buildDay({ id: 7, day_number: 1 })
+    const day8 = buildDay({ id: 8, day_number: 2 })
+    seedTrip({
+      days: [day7, day8],
+      selectedDayId: 7,
+      reservations: [
+        buildReservation({ ...routable(1), id: 1, day_id: 7, end_day_id: 7 }),
+        buildReservation({ ...routable(2), id: 2, day_id: 8, end_day_id: 8 }),
+      ],
+    })
+
+    const { result } = await renderPlanner()
+    act(() => { result.current.setExpandedDayIds(new Set([7])) })
+
+    expect(result.current.visibleConnections).toEqual([1, 2])
+    expect(result.current.mapVisibleConnections).toEqual([1])
+  })
+
   it('FE-TP-HOOK-115: a persisted route toggle keeps transit routes off the map until a day is selected (#2019)', async () => {
     localStorage.setItem('trek:day-route:42', 'true')
     // The fixture action is a no-op; the derivation reads the store, so this
@@ -844,6 +864,16 @@ describe('useTripPlanner — connection visibility', () => {
 
     act(() => { result.current.handleSelectDay(7) })
     expect(result.current.transitRoutesShown).toBe(true)
+
+    // The route preference stays on, but collapsing the selected day removes
+    // that day's transport overlays together with its place markers.
+    act(() => { result.current.setExpandedDayIds(new Set([8])) })
+    expect(result.current.routeShown).toBe(true)
+    expect(result.current.transitRoutesShown).toBe(false)
+    expect(result.current.mapVisibleConnections).toEqual([])
+    act(() => { result.current.setExpandedDayIds(new Set([7])) })
+    expect(result.current.transitRoutesShown).toBe(true)
+    expect(result.current.mapVisibleConnections).toEqual(result.current.visibleConnections)
 
     // Clicking the selected day's header again deselects it — the whole trip's
     // automated transports must not flood back.
@@ -1634,6 +1664,23 @@ describe('useTripPlanner — bookings and transports', () => {
     expect(actions.loadBudgetItems).toHaveBeenCalledWith(42)
     expect(result.current.showTransportModal).toBe(false)
     expect(result.current.transportModalDayId).toBeNull()
+    expect(result.current.routeShown).toBe(false)
+    expect(actions.setSelectedDay).toHaveBeenCalledWith(7)
+  })
+
+  it('shows a new transit itinerary as a booking route without enabling the day route', async () => {
+    seedTrip()
+    const { result } = await renderPlanner()
+    expect(result.current.routeShown).toBe(false)
+
+    actions.addReservation.mockResolvedValue(buildReservation({ id: 9, type: 'transit', day_id: 7 }))
+    await act(async () => {
+      await result.current.handleSaveTransport({ title: 'Metro', type: 'transit', day_id: 7 })
+    })
+
+    expect(result.current.routeShown).toBe(false)
+    expect(result.current.visibleConnections).toContain(9)
+    expect(actions.setSelectedDay).toHaveBeenCalledWith(7)
   })
 
   it('FE-TP-HOOK-085: editing a transport updates it and clears the editor', async () => {

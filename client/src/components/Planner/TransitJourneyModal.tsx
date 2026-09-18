@@ -10,6 +10,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { splitReservationDateTime, formatTime } from '../../utils/formatters'
 import { TransitTitle, TransitMetaBadges, TransitWalkDivider, fmtTransitDuration } from './transitDisplay'
 import type { Reservation } from '../../types'
+import { compactTransitLine, correctedTransferCount, selectTransitAlternatives, transitAlternativeGroups, transitAlternativeKey } from '../../utils/transitAlternatives'
 
 /**
  * The journey view for an automated public-transit entry (#1065): a roomy modal
@@ -37,7 +38,7 @@ interface TransitJourneyModalProps {
   reservation: Reservation
   onClose: () => void
   /** Partial field update — endpoints + itinerary stay untouched. */
-  onSave: (fields: { title: string; notes: string | null }) => Promise<unknown>
+  onSave: (fields: { title: string; notes: string | null; metadata?: string }) => Promise<unknown>
   onDelete: () => Promise<unknown>
   onChangeRoute: () => void
   /** Switch to the full transport editor (travelers, costs, files, code, status). */
@@ -56,6 +57,8 @@ export default function TransitJourneyModal({ reservation, onClose, onSave, onDe
   const [title, setTitle] = useState(res.title || '')
   const [editingTitle, setEditingTitle] = useState(false)
   const [notes, setNotes] = useState(res.notes || '')
+  const initialLineSelections = (transit?.selected_lines || {}) as Record<string, string>
+  const [lineSelections, setLineSelections] = useState<Record<string, string>>(initialLineSelections)
   // Existing notes open rendered; the write tab is for editing.
   const [notesTab, setNotesTab] = useState<'write' | 'preview'>(() => (res.notes ? 'preview' : 'write'))
   const [saving, setSaving] = useState(false)
@@ -110,19 +113,24 @@ export default function TransitJourneyModal({ reservation, onClose, onSave, onDe
   useEffect(() => {
     setTitle(res.title || '')
     setNotes(res.notes || '')
+    setLineSelections((transit?.selected_lines || {}) as Record<string, string>)
     setEditingTitle(false)
     setNotesTab(res.notes ? 'preview' : 'write')
   }, [res.id])
 
   useEffect(() => { if (editingTitle) titleInputRef.current?.focus() }, [editingTitle])
 
-  const dirty = title !== (res.title || '') || notes !== (res.notes || '')
+  const dirty = title !== (res.title || '') || notes !== (res.notes || '') || JSON.stringify(lineSelections) !== JSON.stringify(initialLineSelections)
 
   const save = async () => {
     if (!title.trim()) return
     setSaving(true)
     try {
-      await onSave({ title: title.trim(), notes: notes.trim() || null })
+      const linesChanged = JSON.stringify(lineSelections) !== JSON.stringify(initialLineSelections)
+      await onSave({
+        title: title.trim(), notes: notes.trim() || null,
+        ...(linesChanged && transit ? { metadata: JSON.stringify({ ...meta, transit: { ...transit, selected_lines: lineSelections } }) } : {}),
+      })
       onClose()
     } finally { setSaving(false) }
   }
@@ -133,7 +141,7 @@ export default function TransitJourneyModal({ reservation, onClose, onSave, onDe
 
   const statTiles = transit ? [
     { Icon: Clock, value: transit.duration > 0 ? fmtTransitDuration(transit.duration, t) : '—', label: t('transit.durationLabel') },
-    { Icon: ArrowRightLeft, value: String(transit.transfers ?? 0), label: t('transit.transfersLabel') },
+    { Icon: ArrowRightLeft, value: String(correctedTransferCount(transit.legs, transit.transfers)), label: t('transit.transfersLabel') },
     { Icon: Footprints, value: transit.walk_seconds > 59 ? t('transit.min', { count: Math.round(transit.walk_seconds / 60) }) : '—', label: t('transit.walkLabel') },
   ] : []
 
@@ -252,8 +260,21 @@ export default function TransitJourneyModal({ reservation, onClose, onSave, onDe
               <div className="text-content-faint" style={{ fontSize: 'calc(10px * var(--fs-scale-caption, 1))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 12 }}>
                 {t('transit.itinerary')}
               </div>
+              {transitAlternativeGroups(transit.legs as TransitLegMeta[]).filter(group => group.length > 1).map(group => {
+                const key = transitAlternativeKey(group[0])
+                return (
+                  <label key={key} className="text-content-muted" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, fontSize: 'calc(11px * var(--fs-scale-caption, 1))' }}>
+                    <span style={{ flexShrink: 0 }}>选择线路</span>
+                    <select value={lineSelections[key] || compactTransitLine(group[0].line)} disabled={!canEdit}
+                      onChange={event => setLineSelections(current => ({ ...current, [key]: event.target.value }))}
+                      style={{ minWidth: 0, flex: 1, border: '1px solid var(--border-faint)', borderRadius: 7, padding: '5px 8px', background: 'var(--bg-card)', color: 'var(--text-primary)', font: '600 12px var(--font-system)' }}>
+                      {group.map(option => <option key={option.line || option.mode} value={compactTransitLine(option.line)}>{option.line || option.mode}</option>)}
+                    </select>
+                  </label>
+                )
+              })}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {(transit.legs as TransitLegMeta[]).map((leg, i) => {
+                {selectTransitAlternatives(transit.legs as TransitLegMeta[], lineSelections).map((leg, i) => {
                   if (leg.mode === 'WALK') return <TransitWalkDivider key={i} leg={leg} t={t} size={isMobile ? 'sm' : 'md'} />
                   const mins = leg.duration ? Math.round(leg.duration / 60) : null
                   if (isMobile) {

@@ -22,6 +22,7 @@ const latLng = z.object({ lat: z.number(), lng: z.number() });
 
 export const mapsSearchRequestSchema = z.object({
   query: z.string().min(1),
+  tripId: z.number().int().positive().optional(),
   // Optional bias toward a coordinate (lat/lng[/radius]); improves
   // foreign-region queries. z.number() is finite-only (zod v4), matching the
   // legacy Number.isFinite() check; radius was never validated beyond "number".
@@ -31,6 +32,7 @@ export type MapsSearchRequest = z.infer<typeof mapsSearchRequestSchema>;
 
 export const mapsAutocompleteRequestSchema = z.object({
   input: z.string().min(1).max(200),
+  tripId: z.number().int().positive().optional(),
   lang: z.string().optional(),
   locationBias: z.object({ low: latLng, high: latLng }).optional(),
   /**
@@ -39,7 +41,10 @@ export const mapsAutocompleteRequestSchema = z.object({
    * characters; anything else is dropped rather than forwarded, so a bad token
    * degrades to per-request billing instead of failing the search.
    */
-  sessionToken: z.string().regex(/^[A-Za-z0-9_-]{1,36}$/).optional(),
+  sessionToken: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,36}$/)
+    .optional(),
 });
 export type MapsAutocompleteRequest = z.infer<typeof mapsAutocompleteRequestSchema>;
 

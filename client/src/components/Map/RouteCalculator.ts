@@ -1,5 +1,6 @@
 import { useSettingsStore } from '../../store/settingsStore'
-import { pluginsApi } from '../../api/client'
+import { useTripStore } from '../../store/tripStore'
+import { pluginsApi, routesApi } from '../../api/client'
 import type { DistanceUnit, RouteResult, RouteSegment, RouteWithLegs, Waypoint, RouteAnchors } from '../../types'
 import { formatDistance } from '../../utils/units'
 
@@ -24,7 +25,7 @@ const ROUTE_CACHE_MAX = 200
  * key `plugin:<pluginId>/<profileId>` — the route toggle offers those for every
  * active routeProvider plugin, and calculateRouteWithLegs dispatches on the prefix.
  */
-export type RouteProfileKey = 'driving' | 'walking' | 'cycling' | (string & {})
+export type RouteProfileKey = 'driving' | 'walking' | 'cycling' | 'electrobike' | (string & {})
 
 export function parsePluginProfile(profile: string): { pluginId: string; profileId: string } | null {
   if (!profile.startsWith('plugin:')) return null
@@ -297,8 +298,12 @@ export async function calculateRouteWithLegs(
   // A plugin route is trip-/day-specific (it may return different charging stops for
   // the same coordinates on a different day), so its key includes tripId/dayId;
   // the built-in OSRM profiles are context-free and leave those out.
-  const pluginScope = profile.startsWith('plugin:') ? `:${tripId ?? ''}:${dayId ?? ''}` : ''
-  const cacheKey = `${profile}:${getDistanceUnit()}:${coords}${pluginScope}`
+  const activeTrip = useTripStore.getState().trip
+  const isAmapTrip = tripId != null && String(activeTrip?.id) === String(tripId) && activeTrip?.geo_provider === 'amap'
+  const providerScope = profile.startsWith('plugin:')
+    ? `:plugin:${tripId ?? ''}:${dayId ?? ''}`
+    : isAmapTrip ? `:amap:${tripId}` : ':global'
+  const cacheKey = `${profile}:${getDistanceUnit()}:${coords}${providerScope}`
   const cached = routeCache.get(cacheKey)
   if (cached) return cached
 
@@ -344,7 +349,47 @@ export async function calculateRouteWithLegs(
     return result
   }
 
-  const osrmProfile = (profile === 'walking' || profile === 'cycling') ? profile : 'driving'
+  if (isAmapTrip && tripId != null) {
+    const routeType = profile === 'walking' ? 'walking'
+      : profile === 'cycling' ? 'bicycling'
+        : profile === 'electrobike' ? 'electrobike'
+          : 'driving'
+    try {
+      const response = await routesApi.plan({
+        tripId: Number(tripId), routeType,
+        waypoints: waypoints.map(({ lat, lng }) => ({ lat, lng })),
+      })
+      const legs: RouteSegment[] = response.route.legs.map((leg) => ({
+        from: [leg.from[0]!, leg.from[1]!],
+        to: [leg.to[0]!, leg.to[1]!],
+        mid: [leg.mid[0]!, leg.mid[1]!],
+        distance: leg.distance,
+        duration: leg.duration,
+        walkingText: formatDuration(leg.distance / (5000 / 3600)),
+        drivingText: formatDuration(leg.duration),
+        distanceText: formatRouteDistance(leg.distance),
+        durationText: formatDuration(leg.duration),
+      }))
+      const result: RouteWithLegs = {
+        coordinates: response.route.coordinates.map((point) => [point[0]!, point[1]!] as [number, number]),
+        distance: response.route.distance,
+        duration: response.route.duration,
+        legs,
+      }
+      routeCache.set(cacheKey, result)
+      if (routeCache.size > ROUTE_CACHE_MAX) {
+        const oldest = routeCache.keys().next().value
+        if (oldest !== undefined) routeCache.delete(oldest)
+      }
+      return result
+    } catch (error) {
+      // Preserve TREK's existing resilience: an Amap outage must not remove the
+      // day route. The built-in OSRM profile below is the road fallback.
+      console.warn('[Routes] Amap road route failed; using OSRM:', error instanceof Error ? error.message : 'unknown error')
+    }
+  }
+
+  const osrmProfile = profile === 'walking' ? 'walking' : profile === 'cycling' || profile === 'electrobike' ? 'cycling' : 'driving'
   const url = `${OSRM_PROFILE_BASE[osrmProfile]}/${coords}?overview=full&geometries=geojson&annotations=distance,duration`
   const response = await fetch(url, { signal })
   if (!response.ok) throw new Error('Route could not be calculated')

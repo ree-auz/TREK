@@ -334,7 +334,8 @@ const admin: TranslationStrings = {
     'Colorare i giorni nel piano della giornata (ad esempio a quale tratta del viaggio appartiene un giorno)',
   'admin.plugins.cap.mcpTools': 'Pubblica strumenti IA',
   'admin.plugins.mcpToolsTitle': 'Strumenti IA pubblicati',
-  'admin.plugins.mcpToolsHint': 'Un assistente può eseguirli per conto di un utente. Ognuno agisce con i permessi concessi sopra.',
+  'admin.plugins.mcpToolsHint':
+    'Un assistente può eseguirli per conto di un utente. Ognuno agisce con i permessi concessi sopra.',
   'admin.plugins.perm.mcp:tools':
     'Pubblicare strumenti che un assistente IA può eseguire per tuo conto (agisce con i permessi che concedi qui al plugin, non con i propri)',
   'admin.plugins.perm.geolocation:read':
@@ -437,7 +438,8 @@ const admin: TranslationStrings = {
   'admin.plugins.changeVersion': 'Cambia versione…',
   'admin.plugins.noVersions': 'Nessuna versione pubblicata trovata nel registro.',
   'admin.plugins.downgradeTitle': 'Ripristinare questo plugin?',
-  'admin.plugins.downgradeBody': 'Passaggio da v{from} a v{to}: i dati scritti dalla versione più recente restano, e la versione precedente potrebbe non comprenderli.',
+  'admin.plugins.downgradeBody':
+    'Passaggio da v{from} a v{to}: i dati scritti dalla versione più recente restano, e la versione precedente potrebbe non comprenderli.',
   'admin.plugins.downgradeConfirm': 'Ripristina',
   'admin.plugins.updatesHeld': 'Aggiornamenti in pausa alla v{version}',
   'admin.plugins.resumeUpdates': 'Riprendi aggiornamenti',
@@ -533,7 +535,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.airtrail.name': 'AirTrail',
   'admin.addons.catalog.airtrail.description': 'Sincronizza i voli dalla tua istanza AirTrail',
   'admin.addons.catalog.llm_parsing.name': 'Analisi con IA',
-  'admin.addons.catalog.llm_parsing.description': 'Legge le prenotazioni che l’analizzatore integrato non riesce a interpretare, con un modello di IA a tua scelta',
+  'admin.addons.catalog.llm_parsing.description':
+    'Legge le prenotazioni che l’analizzatore integrato non riesce a interpretare, con un modello di IA a tua scelta',
   'admin.addons.enabled': 'Abilitato',
   'admin.addons.disabled': 'Disabilitato',
   'admin.addons.type.trip': 'Viaggio',
@@ -680,7 +683,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.journey.name': 'Diario di viaggio',
   'admin.addons.catalog.journey.description': 'Tracciamento viaggi e diario con check-in, foto e storie quotidiane',
   'admin.addons.catalog.collections.name': 'Raccolte',
-  'admin.addons.catalog.collections.description': 'Raccogli luoghi da tutti i viaggi in elenchi con nome e riutilizzali',
+  'admin.addons.catalog.collections.description':
+    'Raccogli luoghi da tutti i viaggi in elenchi con nome e riutilizzali',
   'admin.passkey.title': 'Accesso con passkey',
   'admin.passkey.cardHint':
     'Consenti agli utenti di accedere con le passkey (WebAuthn). Disattivato per impostazione predefinita.',

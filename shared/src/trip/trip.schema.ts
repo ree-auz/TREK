@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export const tripGeoProviderSchema = z.enum(['global', 'amap']);
+export type TripGeoProvider = z.infer<typeof tripGeoProviderSchema>;
+
 /**
  * Trip API contract — single source of truth for the /api/trips aggregate-root
  * endpoints (list/create/get/update/delete a trip, cover upload, copy, members,
@@ -30,6 +33,9 @@ export const tripSchema = z.object({
   cover_image: z.string().nullable().optional(),
   is_archived: z.number(),
   reminder_days: z.number(),
+  // Optional on the wire for legacy offline snapshots; the database and service
+  // default it to global for every current row.
+  geo_provider: tripGeoProviderSchema.optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
   // computed in TRIP_SELECT (list/get)
@@ -79,6 +85,7 @@ export const tripCreateRequestSchema = z.object({
   currency: z.string().optional(),
   reminder_days: z.number().optional(),
   day_count: z.number().optional(),
+  geo_provider: tripGeoProviderSchema.optional(),
 });
 export type TripCreateRequest = z.infer<typeof tripCreateRequestSchema>;
 
@@ -100,6 +107,7 @@ export const tripUpdateRequestSchema = z.object({
   day_count: z.number().optional(),
   is_archived: z.union([z.boolean(), z.number()]).optional(),
   cover_image: z.string().nullable().optional(),
+  geo_provider: tripGeoProviderSchema.optional(),
 });
 export type TripUpdateRequest = z.infer<typeof tripUpdateRequestSchema>;
 

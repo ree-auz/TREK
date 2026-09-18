@@ -74,7 +74,7 @@ describe('PlPlaceSearch', () => {
     expect(autocompleteBodies).toHaveLength(0)
     expect(await screen.findByText('Louvre')).toBeInTheDocument()
     expect(screen.getByText('Paris, France')).toBeInTheDocument()
-    expect(autocompleteBodies[0]).toMatchObject({ input: 'Lou', lang: 'en' })
+    expect(autocompleteBodies[0]).toMatchObject({ input: 'Lou', lang: 'en', tripId: buildPlanner().tripId })
   })
 
   it('FE-MOB-PLSRCH-003: forwards the trip-centre bias', async () => {
@@ -128,7 +128,7 @@ describe('PlPlaceSearch', () => {
     fireEvent.click(await screen.findByText('Louvre'))
 
     await waitFor(() => expect(onPick).toHaveBeenCalledTimes(2))
-    expect(searchBodies[0]).toEqual({ query: 'Louvre, Paris, France' })
+    expect(searchBodies[0]).toEqual({ query: 'Louvre, Paris, France', tripId: buildPlanner().tripId })
     expect(onPick).toHaveBeenLastCalledWith(expect.objectContaining({ name: 'Louvre Museum', lat: '48.8606' }))
   })
 
@@ -230,6 +230,7 @@ describe('PlPlaceSearch', () => {
     expect(await screen.findByText('Louvre Museum')).toBeInTheDocument()
     expect(screen.getByText('Louvre Lens')).toBeInTheDocument()
     expect(screen.getByText('Rue de Rivoli, Paris')).toBeInTheDocument()
+    expect(searchBodies[0]).toEqual({ query: 'louvre museum', tripId: buildPlanner().tripId })
 
     fireEvent.click(screen.getByText('Louvre Lens'))
     expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ name: 'Louvre Lens', address: 'Lens', lat: undefined }))
@@ -310,7 +311,7 @@ describe('PlPlaceSearch', () => {
     fireEvent.change(input, { target: { value: 'Lou' } })
     fireEvent.click(await screen.findByText('Louvre'))
     await waitFor(() => expect(searchBodies).toHaveLength(1))
-    expect(searchBodies[0]).toEqual({ query: 'Louvre' })
+    expect(searchBodies[0]).toEqual({ query: 'Louvre', tripId: buildPlanner().tripId })
   })
 
   it('FE-MOB-PLSRCH-018c: a response without a places array leaves the result list empty', async () => {

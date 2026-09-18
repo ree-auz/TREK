@@ -9,9 +9,10 @@
  * listed here pass through untouched (Zod strips unknown keys, it does not
  * reject them).
  */
-import { z } from 'zod';
-import { SUPPORTED_LANGUAGE_CODES } from '@trek/shared';
 import { parseDurationMs } from './parsers';
+import { SUPPORTED_LANGUAGE_CODES } from '@trek/shared';
+
+import { z } from 'zod';
 
 /** Present-but-malformed fails; unset/blank always passes (defaults apply). */
 function optionalWith(test: (v: string) => boolean, message: string) {
@@ -43,10 +44,7 @@ const url = optionalWith((v) => {
     return false;
   }
 }, 'must be a valid URL (with protocol)');
-const duration = optionalWith(
-  (v) => parseDurationMs(v) != null,
-  'must be a duration like "1h", "7d" or "30d"',
-);
+const duration = optionalWith((v) => parseDurationMs(v) != null, 'must be a duration like "1h", "7d" or "30d"');
 const oneOf = (values: string[]) =>
   optionalWith((v) => values.includes(v.toLowerCase()), `must be one of: ${values.join(', ')}`);
 
@@ -107,6 +105,14 @@ export const envSchema = z.object({
 
   // Integrations
   UNSPLASH_ACCESS_KEY: anyString,
+  AMAP_WEB_KEY: anyString,
+  // Browser-facing Amap JS API credentials. These are intentionally separate
+  // from AMAP_WEB_KEY, which must never leave the server.
+  AMAP_JS_KEY: anyString,
+  AMAP_JS_SECURITY_CODE: anyString,
+  // May be a same-origin path such as /_AMapService, so URL-only validation
+  // would reject the safest self-hosted configuration.
+  AMAP_JS_SECURITY_SERVICE_HOST: anyString,
   TRANSIT_API_URL: url,
   // OVERPASS_URL accepts a comma-separated endpoint list and silently drops
   // non-http(s) entries today — left unvalidated to keep that behavior.

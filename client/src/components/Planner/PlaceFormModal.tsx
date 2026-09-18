@@ -104,6 +104,7 @@ function usePlaceFormModal(props: PlaceFormModalProps) {
   const fileRef = useRef(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [acSuggestions, setAcSuggestions] = useState<{ placeId: string; mainText: string; secondaryText: string }[]>([])
+  const [autocompleteSource, setAutocompleteSource] = useState<string | null>(null)
   const [acHighlight, setAcHighlight] = useState(-1)
   const acDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const acAbortRef = useRef<AbortController | null>(null)
@@ -251,7 +252,8 @@ function usePlaceFormModal(props: PlaceFormModalProps) {
     const controller = new AbortController()
     acAbortRef.current = controller
     try {
-      const result = await mapsApi.autocomplete(query, language, locationBias, controller.signal, placesSessionRef.current.current())
+      const result = await mapsApi.autocomplete(query, language, locationBias, controller.signal, placesSessionRef.current.current(), tripId)
+      setAutocompleteSource(result.source || null)
       setAcSuggestions(result.suggestions || [])
       setAcHighlight(-1)
     } catch (err: unknown) {
@@ -310,7 +312,7 @@ function usePlaceFormModal(props: PlaceFormModalProps) {
           return
         }
       }
-      const result = await mapsApi.search(mapsSearch, language)
+      const result = await mapsApi.search(mapsSearch, language, tripId)
       setMapsResults(result.places || [])
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, t('places.mapsSearchError')))
@@ -368,7 +370,7 @@ function usePlaceFormModal(props: PlaceFormModalProps) {
       }
       if (!place) {
         const query = [suggestion.mainText, suggestion.secondaryText].filter(Boolean).join(', ')
-        const search = await mapsApi.search(query, language)
+        const search = await mapsApi.search(query, language, tripId)
         place = search.places?.[0] ?? null
       }
       if (place) {
@@ -545,6 +547,7 @@ function usePlaceFormModal(props: PlaceFormModalProps) {
     setPendingFiles,
     fileRef,
     acSuggestions,
+    autocompleteSource,
     setAcSuggestions,
     acHighlight,
     setAcHighlight,
@@ -617,6 +620,7 @@ export default function PlaceFormModal(props: PlaceFormModalProps) {
     setPendingFiles,
     fileRef,
     acSuggestions,
+    autocompleteSource,
     setAcSuggestions,
     acHighlight,
     setAcHighlight,
@@ -706,7 +710,11 @@ export default function PlaceFormModal(props: PlaceFormModalProps) {
       <form onSubmit={handleSubmit} className={twoColumn || showDetails ? 'flex-1 min-w-0 space-y-3' : 'space-y-3'} onPaste={handlePaste}>
         {/* Place Search */}
         <div className="bg-surface-secondary rounded-xl p-3 border border-edge">
-          {!hasMapsKey && (
+          {autocompleteSource === 'amap' ? (
+            <p className="mb-2 text-xs text-content-faint">
+              {t('places.amapActive')}
+            </p>
+          ) : !hasMapsKey && (
             <p className="mb-2 text-xs text-content-faint">
               {t('places.osmActive')}
             </p>

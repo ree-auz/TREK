@@ -3,6 +3,7 @@
  * Covers BACKUP-031 to BACKUP-060.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import path from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — must be defined before any vi.mock() calls
@@ -365,9 +366,9 @@ describe('BACKUP-036 createBackup', () => {
     expect(archiverInstanceMock.pipe).toHaveBeenCalled();
     expect(archiverInstanceMock.finalize).toHaveBeenCalled();
     // The zip is built in the backups backend's spool, then committed via put.
-    expect(fsMock.createWriteStream).toHaveBeenCalledWith(expect.stringContaining('/stub/spool/zip-build-backup-'));
+    expect(fsMock.createWriteStream).toHaveBeenCalledWith(expect.stringContaining(path.join('/stub/spool', 'zip-build-backup-')));
     expect(storage.put).toHaveBeenCalledWith('backups', result.filename, {
-      tmpPath: expect.stringContaining('/stub/spool/zip-build-backup-'),
+      tmpPath: expect.stringContaining(path.join('/stub/spool', 'zip-build-backup-')),
     });
     expect(storage.stat).toHaveBeenCalledWith('backups', result.filename);
   });
@@ -430,11 +431,11 @@ describe('BACKUP-036 createBackup', () => {
     );
     expect(fileCall).toBeDefined();
     const stagedPath = fileCall![0] as string;
-    expect(stagedPath).toContain('/stub/spool/staging-backup-');
-    expect(stagedPath).toContain('files/remote.pdf');
+    expect(stagedPath).toContain(path.join('/stub/spool', 'staging-backup-'));
+    expect(stagedPath).toContain(path.join('files', 'remote.pdf'));
     // The staging dir is removed alongside zipSpool/dbSnap in the existing finally.
     expect(fsMock.rmSync).toHaveBeenCalledWith(
-      expect.stringContaining('/stub/spool/staging-backup-'),
+      expect.stringContaining(path.join('/stub/spool', 'staging-backup-')),
       { recursive: true, force: true },
     );
   });
@@ -494,7 +495,7 @@ describe('BACKUP-036 createBackup', () => {
     expect(archiverInstanceMock.directory).toHaveBeenCalledWith(expect.stringContaining('notes'), 'plugins-code/notes');
     expect(archiverInstanceMock.directory).not.toHaveBeenCalledWith(expect.anything(), 'plugins-code/devlink');
     // the snapshot staging lives in the backups spool
-    expect(archiverInstanceMock.directory).toHaveBeenCalledWith(expect.stringContaining('/stub/spool/plugins-snap-backup-'), 'plugins-data');
+    expect(archiverInstanceMock.directory).toHaveBeenCalledWith(expect.stringContaining(path.join('/stub/spool', 'plugins-snap-backup-')), 'plugins-data');
   });
 
   it('BACKUP-036b — WAL checkpoint error is swallowed (non-critical)', async () => {
@@ -540,7 +541,7 @@ describe('BACKUP-036 createBackup', () => {
     // the core DB is snapshotted (VACUUM INTO) and archived under the name travel.db
     expect(dbMock.db.exec).toHaveBeenCalledWith(expect.stringContaining('VACUUM INTO'));
     expect(archiverInstanceMock.file).toHaveBeenCalledWith(
-      expect.stringContaining('/stub/spool/travel-snap-backup-'),
+      expect.stringContaining(path.join('/stub/spool', 'travel-snap-backup-')),
       { name: 'travel.db' }
     );
   });
@@ -1343,7 +1344,7 @@ describe('BACKUP-046 restoreFromZip — uploads rehydration through storage', ()
       return true;
     });
     fsMock.readdirSync.mockImplementation((p: string, opts?: { withFileTypes?: boolean }) => {
-      const s = String(p);
+      const s = String(p).replaceAll('\\', '/');
       const key = Object.keys(tree).find(k => s.endsWith(k));
       const entries = key ? tree[key] : [];
       return (opts?.withFileTypes ? entries : entries.map(e => e.name)) as never;
@@ -1388,8 +1389,8 @@ describe('BACKUP-046 restoreFromZip — uploads rehydration through storage', ()
     expect(deleted.every(([, key]) => !(key as string).includes('/'))).toBe(true);
     expect(deleted.map(([c]) => c).sort()).toEqual(['avatars', 'covers', 'files', 'journey', 'photos', 'places']);
     // rehydration: every extracted file becomes a category put, nested keys intact
-    expect(storage.put).toHaveBeenCalledWith('files', 'a.pdf', { tmpPath: expect.stringContaining('/uploads/files/a.pdf') });
-    expect(storage.put).toHaveBeenCalledWith('journey', 'thumbs/t.jpg', { tmpPath: expect.stringContaining('/uploads/journey/thumbs/t.jpg') });
+    expect(storage.put).toHaveBeenCalledWith('files', 'a.pdf', { tmpPath: expect.stringContaining(path.join('uploads', 'files', 'a.pdf')) });
+    expect(storage.put).toHaveBeenCalledWith('journey', 'thumbs/t.jpg', { tmpPath: expect.stringContaining(path.join('uploads', 'journey', 'thumbs', 't.jpg')) });
     // No uploads bulk copy remains (plugin-tree staging still uses cpSync — out of scope).
     const cpTargets = fsMock.cpSync.mock.calls.map(c => String(c[1]));
     expect(cpTargets.some(t => t.includes('uploads'))).toBe(false);

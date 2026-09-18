@@ -5,9 +5,12 @@ import CustomTimePicker from '../shared/CustomTimePicker'
 import { TransitMetaBadges } from './transitDisplay'
 import { transitApi } from '../../api/client'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useTripStore } from '../../store/tripStore'
 import { useToast } from '../shared/Toast'
 import { useTranslation } from '../../i18n'
 import type { Day, Place, Accommodation } from '../../types'
+import type { RouteSource } from '@trek/shared'
+import { correctedTransferCount, selectTransitAlternatives } from '../../utils/transitAlternatives'
 
 /**
  * Public transit route search (#1065), backed by Transitous (MOTIS) through the
@@ -26,10 +29,12 @@ interface TransitLeg {
   mode: string; from: TransitLegStop; to: TransitLegStop; duration: number; distance: number | null
   headsign: string | null; line: string | null; lineColor: string | null; lineTextColor: string | null
   agency: string | null; intermediateStops: number
+  alternativeGroup?: string
+  stopNodes?: Array<{ name: string; lat: number; lng: number; time: string | null; scheduledTime: string | null; track: string | null }>
   geometry?: string | null; geometryPrecision?: number
 }
 export interface TransitItinerary {
-  startTime: string; endTime: string; duration: number; transfers: number; walkSeconds: number; legs: TransitLeg[]
+  startTime: string; endTime: string; duration: number; transfers: number; walkSeconds: number; distance?: number | null; legs: TransitLeg[]
 }
 
 interface TransitPlaceResult { name: string; lat: number; lng: number; type: string; area: string | null }
@@ -94,13 +99,14 @@ function fmtDuration(seconds: number, t: (k: string, p?: Record<string, string |
 
 // ── from/to stop picker ──────────────────────────────────────────────────────
 
-function StopPicker({ label, value, onPick, quickPicks, near, placeholder }: {
+function StopPicker({ label, value, onPick, quickPicks, near, placeholder, tripId }: {
   label: string
   value: PickedPlace | null
   onPick: (p: PickedPlace | null) => void
   quickPicks: PickedPlace[]
   near: string | null
   placeholder: string
+  tripId: number
 }) {
   const { language } = useTranslation()
   const [text, setText] = useState('')
@@ -123,7 +129,7 @@ function StopPicker({ label, value, onPick, quickPicks, near, placeholder }: {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (q.trim().length < 2) { setResults([]); return }
     debounceRef.current = setTimeout(() => {
-      transitApi.geocode(q, { lang: language, near: near || undefined })
+      transitApi.geocode(q, { lang: language, near: near || undefined, tripId })
         .then((d: { results: TransitPlaceResult[] }) => setResults(d.results || []))
         .catch(() => setResults([]))
     }, 300)
@@ -202,8 +208,16 @@ function ItineraryCard({ it, tzFrom, tzTo, is12h, expanded, onToggle, onAdd, add
   adding: boolean
   t: (k: string, p?: Record<string, string | number>) => string
 }) {
-  const transitLegs = it.legs.filter(l => l.mode !== 'WALK')
+  const shownLegs = selectTransitAlternatives(it.legs)
+  const transitLegs = shownLegs.filter(l => l.mode !== 'WALK')
+  const transfers = correctedTransferCount(it.legs, it.transfers)
   const walkMins = Math.round(it.walkSeconds / 60)
+  const walkDistance = it.legs
+    .filter(l => l.mode === 'WALK')
+    .reduce((total, leg) => total + (leg.distance ?? 0), 0)
+  const walkDistanceText = walkDistance > 0
+    ? (walkDistance >= 1000 ? `${(walkDistance / 1000).toFixed(1)} km` : `${Math.round(walkDistance)} m`)
+    : ''
   return (
     <div className="bg-surface-card border border-edge" style={{ borderRadius: 14, overflow: 'hidden' }}>
       <button type="button" onClick={onToggle} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 14px', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -213,14 +227,19 @@ function ItineraryCard({ it, tzFrom, tzTo, is12h, expanded, onToggle, onAdd, add
           </span>
           <span className="text-content-muted" style={{ fontSize: 'calc(13px * var(--fs-scale-body, 1))', fontWeight: 600 }}>{fmtDuration(it.duration, t)}</span>
           <span className="text-content-faint" style={{ marginLeft: 'auto', fontSize: 'calc(12px * var(--fs-scale-body, 1))', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <span>{it.transfers === 0 ? t('transit.direct') : t('transit.transfers', { count: it.transfers })}</span>
-            {walkMins > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><Footprints size={12} />{t('transit.min', { count: walkMins })}</span>}
+            <span>{transfers === 0 ? t('transit.direct') : t('transit.transfers', { count: transfers })}</span>
+            {(walkMins > 0 || walkDistanceText) && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <Footprints size={12} />
+                {[walkMins > 0 ? t('transit.min', { count: walkMins }) : '', walkDistanceText].filter(Boolean).join(' · ')}
+              </span>
+            )}
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </span>
         </div>
         {/* signature: Walk › U2 › Bus 100 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 8, flexWrap: 'wrap' }}>
-          {it.legs.map((leg, i) => (
+          {shownLegs.map((leg, i) => (
             <React.Fragment key={i}>
               {i > 0 && <span className="text-content-faint" style={{ fontSize: 10 }}>›</span>}
               {leg.mode === 'WALK'
@@ -250,7 +269,7 @@ function ItineraryCard({ it, tzFrom, tzTo, is12h, expanded, onToggle, onAdd, add
               (see stopTime below): a feed without realtime data carries only the schedule,
               and this row is now the one that shows the arrival.
             */}
-            {it.legs.map((leg, i) => {
+            {shownLegs.map((leg, i) => {
               const color = leg.mode === 'WALK' ? 'var(--border-primary)' : (leg.lineColor || 'var(--text-muted)')
               return (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '44px 18px 1fr', gap: 8, alignItems: 'stretch' }}>
@@ -297,7 +316,7 @@ function ItineraryCard({ it, tzFrom, tzTo, is12h, expanded, onToggle, onAdd, add
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--text-primary)', flexShrink: 0 }} />
               </div>
               <div className="text-content" style={{ fontSize: 'calc(13px * var(--fs-scale-body, 1))', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {it.legs[it.legs.length - 1]?.to.name}
+                {shownLegs[shownLegs.length - 1]?.to.name}
               </div>
             </div>
           </div>
@@ -344,6 +363,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
   const toast = useToast()
   const is12h = useSettingsStore(s => s.settings.time_format) === '12h'
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const geoProvider = useTripStore(s => s.trip?.geo_provider ?? 'global')
 
   const [from, setFrom] = useState<PickedPlace | null>(initialFrom)
   const [to, setTo] = useState<PickedPlace | null>(initialTo)
@@ -351,6 +371,8 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
   const [arriveBy, setArriveBy] = useState(false)
   const [activeModes, setActiveModes] = useState<Set<string>>(() => new Set(MODE_GROUPS.map(m => m.key)))
   const [pref, setPref] = useState<'best' | 'transfers' | 'walking'>('best')
+  const [source, setSource] = useState<RouteSource | null>(null)
+  const [fallbackUsed, setFallbackUsed] = useState(false)
   const [itineraries, setItineraries] = useState<TransitItinerary[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
@@ -369,7 +391,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
       if (lat != null && lng != null && name) picks.push({ name, lat, lng })
     }
     const seen = new Set<string>()
-    return picks.filter(p => { const k = `${p.name}:${p.lat}`; if (seen.has(k)) return false; seen.add(k); return true }).slice(0, 8)
+    return picks.filter(p => { const k = `${p.name}:${p.lat}`; if (seen.has(k)) return false; seen.add(k); return true })
   }, [places, accommodations])
 
   const near = quickPicks.length > 0 ? `${quickPicks[0].lat},${quickPicks[0].lng}` : null
@@ -395,11 +417,13 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
       const timeIso = localToUtcIso(day.date, time, arriveBy ? tzTo : tzFrom)
       const allModes = activeModes.size === MODE_GROUPS.length
       const modes = allModes ? undefined : MODE_GROUPS.filter(m => activeModes.has(m.key)).map(m => m.modes).join(',')
-      const d = await transitApi.plan({ from: `${from.lat},${from.lng}`, to: `${to.lat},${to.lng}`, time: timeIso, arriveBy, modes })
+      const d = await transitApi.plan({ from: `${from.lat},${from.lng}`, to: `${to.lat},${to.lng}`, time: timeIso, arriveBy, modes, strategy: pref, tripId: day.trip_id })
+      setSource(d.source ?? 'transitous')
+      setFallbackUsed(d.fallbackUsed ?? false)
       // MOTIS names the request coordinates START/END — swap in the places the
       // user actually picked so walks read "Walk to Zoologischer Garten".
       const cleanStop = (n: string) => (n === 'START' ? from.name : n === 'END' ? to.name : n)
-      const cleaned = (d.itineraries || []).map((it: TransitItinerary) => ({
+      const cleaned = (d.itineraries as unknown as TransitItinerary[]).map((it) => ({
         ...it,
         legs: it.legs.map(l => ({
           ...l,
@@ -429,6 +453,8 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
     return list
   }, [itineraries, pref])
 
+  const providerView: RouteSource = source ?? (geoProvider === 'amap' ? 'amap' : 'transitous')
+
   const addItinerary = async (it: TransitItinerary, idx: number) => {
     if (!from || !to || !day.date) return
     setAddingIdx(idx)
@@ -450,7 +476,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
 
       // Endpoints: origin, each transfer stop, destination — the same shape
       // flights persist, so the map + connectors work unchanged.
-      const transitLegs = it.legs.filter(l => l.mode !== 'WALK')
+      const transitLegs = selectTransitAlternatives(it.legs).filter(l => l.mode !== 'WALK')
       const endpoints: Record<string, unknown>[] = []
       endpoints.push({ role: 'from', sequence: 0, name: from.name, code: null, lat: from.lat, lng: from.lng, timezone: tzFrom, local_date: depDate, local_time: depTime })
       transitLegs.slice(0, -1).forEach((leg, i) => {
@@ -476,10 +502,11 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
         notes: null,
         metadata: {
           transit: {
-            provider: 'transitous',
+            provider: source ?? 'transitous',
             duration: it.duration,
-            transfers: it.transfers,
+            transfers: correctedTransferCount(it.legs, it.transfers),
             walk_seconds: it.walkSeconds,
+            walk_distance: it.legs.filter(l => l.mode === 'WALK').reduce((total, leg) => total + (leg.distance ?? 0), 0),
             legs: it.legs.map(l => ({
               mode: l.mode,
               line: l.line,
@@ -489,8 +516,10 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
               agency: l.agency,
               duration: l.duration,
               stops: l.intermediateStops,
-              from: { name: l.from.name, time: stopTime(l.from) ? timeHHmmInTz(stopTime(l.from)!, tzAt(l.from.lat, l.from.lng)) : null, track: l.from.track },
-              to: { name: l.to.name, time: stopTime(l.to) ? timeHHmmInTz(stopTime(l.to)!, tzAt(l.to.lat, l.to.lng)) : null, track: l.to.track },
+              stop_nodes: l.stopNodes || [],
+              alternative_group: l.alternativeGroup,
+              from: { name: l.from.name, lat: l.from.lat, lng: l.from.lng, time: stopTime(l.from) ? timeHHmmInTz(stopTime(l.from)!, tzAt(l.from.lat, l.from.lng)) : null, track: l.from.track },
+              to: { name: l.to.name, lat: l.to.lat, lng: l.to.lng, time: stopTime(l.to) ? timeHHmmInTz(stopTime(l.to)!, tzAt(l.to.lat, l.to.lng)) : null, track: l.to.track },
               geometry: l.geometry || null,
               geometry_precision: l.geometryPrecision ?? 6,
             })),
@@ -522,7 +551,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: 'var(--font-system)' }}>
         {/* from / to — stacked tight on mobile, swap button on desktop only */}
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 8, alignItems: isMobile ? 'stretch' : 'flex-end' }}>
-          <StopPicker label={t('transit.from')} value={from} onPick={setFrom} quickPicks={quickPicks} near={near} placeholder={t('transit.searchStop')} />
+          <StopPicker label={t('transit.from')} value={from} onPick={setFrom} quickPicks={quickPicks} near={near} placeholder={t('transit.searchStop')} tripId={day.trip_id} />
           {!isMobile && (
             <button type="button"
               onClick={() => { const f = from; setFrom(to); setTo(f) }}
@@ -534,7 +563,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
               <ArrowLeftRight size={15} />
             </button>
           )}
-          <StopPicker label={t('transit.to')} value={to} onPick={setTo} quickPicks={quickPicks} near={near} placeholder={t('transit.searchStop')} />
+          <StopPicker label={t('transit.to')} value={to} onPick={setTo} quickPicks={quickPicks} near={near} placeholder={t('transit.searchStop')} tripId={day.trip_id} />
         </div>
 
         {/* search options — one calm card: when + how on top, modes + go below */}
@@ -565,7 +594,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
           <div style={{ height: 1, background: 'var(--border-faint)' }} />
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            {providerView === 'transitous' ? <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {MODE_GROUPS.map(m => {
                 const active = activeModes.has(m.key)
                 return (
@@ -585,7 +614,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
                   </button>
                 )
               })}
-            </div>
+            </div> : <div />}
             <button type="button"
               onClick={search}
               disabled={!from || !to || loading}
@@ -626,8 +655,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
               />
             ))}
             <div className="text-content-faint" style={{ fontSize: 'calc(10.5px * var(--fs-scale-caption, 1))', textAlign: 'center', marginTop: 2 }}>
-              {t('transit.attribution')}{' '}
-              <a href="https://transitous.org/sources/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>Transitous</a>
+              {fallbackUsed ? t('transit.fallbackAttribution') : <>{t('transit.attribution')}{' '}{source === 'amap' ? t('transit.source.amap') : <a href="https://transitous.org/sources/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>Transitous</a>}</>}
             </div>
           </div>
         )}

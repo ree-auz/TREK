@@ -1,6 +1,7 @@
 services:
   app:
-    image: mauriceboe/trek:latest
+    image: trek-amap:local
+    build: .
     container_name: trek
     read_only: true
     security_opt:
@@ -28,7 +29,7 @@ services:
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-} # Comma-separated origins for CORS and email notification links
 #      - FORCE_HTTPS=true # Optional. Enables HTTPS redirect, HSTS, CSP upgrade-insecure-requests, and secure cookies behind a TLS proxy
 #      - HSTS_INCLUDE_SUBDOMAINS=false # When true: adds includeSubDomains to the HSTS header. Only effective when HSTS is active. Leave false if sibling subdomains still run over plain HTTP.
-#      - COOKIE_SECURE=false # Escape hatch: force session cookies over plain HTTP even in production. Not recommended.
+      - COOKIE_SECURE=${COOKIE_SECURE:-} # Escape hatch: force session cookies over plain HTTP even in production. Not recommended.
 #      - TRUST_PROXY=1 # Trusted proxy count for X-Forwarded-For / X-Forwarded-Proto. Required for FORCE_HTTPS to work.
 #      - ALLOW_INTERNAL_NETWORK=false # Set to true if Immich or other services are hosted on your local network (RFC-1918 IPs). Loopback and link-local addresses remain blocked regardless.
 #      - HTTP_PROXY=${HTTP_PROXY:-} # Optional. Proxy URL for outbound HTTP requests (e.g. http://192.168.1.10:7890)
@@ -50,6 +51,11 @@ services:
 #      - MCP_MAX_SESSION_PER_USER=20 # Max concurrent MCP sessions per user (default: 20)
 #      - KITINERARY_EXTRACTOR_PATH= # Optional. Full path to kitinerary-extractor binary. Auto-detected from PATH and /usr/lib/*/libexec/kf6/ when unset.
 #      - UNSPLASH_ACCESS_KEY= # Optional. Unsplash Access Key for trip-cover / place-image search. Without one, TREK uses Unsplash's unauthenticated endpoint, which some datacenter/VPS IPs are blocked from (#1449). Free key at unsplash.com/developers. Can also be set per-admin in Admin > Settings; the env var overrides that.
+      # Optional Amap credentials from the root .env; see README for setup.
+      - AMAP_WEB_KEY=${AMAP_WEB_KEY:-} # Web Service key; server-only.
+      - AMAP_JS_KEY=${AMAP_JS_KEY:-} # Web (JS API) key; sent to the browser.
+      - AMAP_JS_SECURITY_CODE=${AMAP_JS_SECURITY_CODE:-} # Direct browser security code for local testing.
+      - AMAP_JS_SECURITY_SERVICE_HOST=${AMAP_JS_SECURITY_SERVICE_HOST:-} # Leave empty locally; configure the proxy separately before setting this (see README).
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads

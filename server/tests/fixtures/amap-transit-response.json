@@ -1,0 +1,91 @@
+{
+  "status": "1",
+  "info": "OK",
+  "infocode": "10000",
+  "route": {
+    "origin": "106.571100,29.554200",
+    "destination": "106.551600,29.564700",
+    "distance": "5480",
+    "transits": [
+      {
+        "cost": { "duration": "1860" },
+        "nightflag": "0",
+        "walking_distance": "620",
+        "transfers": "0",
+        "segments": [
+          {
+            "walking": {
+              "origin": "106.571100,29.554200",
+              "destination": "106.568900,29.556100",
+              "distance": "310",
+              "duration": "260",
+              "steps": [
+                {
+                  "instruction": "步行至小什字站",
+                  "road": "民族路",
+                  "distance": "310",
+                  "duration": "260",
+                  "polyline": {
+                    "polyline": "106.571100,29.554200;106.570200,29.555000;106.569500,29.555600;106.568900,29.556100"
+                  }
+                }
+              ]
+            },
+            "bus": { "buslines": [] },
+            "railway": []
+          },
+          {
+            "walking": [],
+            "bus": {
+              "buslines": [
+                {
+                  "name": "轨道交通1号线(朝天门--璧山)",
+                  "type": "地铁线路",
+                  "distance": "4550",
+                  "duration": "1280",
+                  "start_time": "0630",
+                  "end_time": "2330",
+                  "departure_stop": {
+                    "name": "小什字",
+                    "location": "106.568900,29.556100",
+                    "entrance": { "name": "5A口", "location": "106.569000,29.556000" }
+                  },
+                  "arrival_stop": {
+                    "name": "较场口",
+                    "location": "106.553900,29.560600",
+                    "exit": { "name": "9口", "location": "106.553800,29.560700" }
+                  },
+                  "via_stops": [
+                    { "name": "七星岗", "location": "106.563400,29.558900" }
+                  ],
+                  "polyline": {
+                    "polyline": "106.568900,29.556100;106.563400,29.558900;106.558300,29.560000;106.553900,29.560600"
+                  }
+                }
+              ]
+            },
+            "railway": []
+          },
+          {
+            "walking": {
+              "origin": "106.553900,29.560600",
+              "destination": "106.551600,29.564700",
+              "distance": "310",
+              "duration": "320",
+              "steps": [
+                {
+                  "instruction": "步行至终点",
+                  "polyline": {
+                    "polyline": "106.553900,29.560600;106.552800,29.562600;106.551600,29.564700"
+                  }
+                }
+              ]
+            },
+            "bus": { "buslines": [] },
+            "railway": []
+          }
+        ]
+      }
+    ]
+  }
+}

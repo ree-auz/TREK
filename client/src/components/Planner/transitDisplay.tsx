@@ -1,5 +1,6 @@
 import React from 'react'
 import { Footprints, MoveRight, type LucideIcon } from 'lucide-react'
+import { compactTransitLine, correctedTransferCount, selectTransitAlternatives } from '../../utils/transitAlternatives'
 
 /**
  * Shared display bits for public-transit entries (#1065) — the timeline row,
@@ -59,13 +60,15 @@ export function TransitWalkDivider({ leg, t, size = 'md' }: {
  * The itinerary folded out right inside the day-plan row (#1065): one compact
  * line per leg — time, badge or foot icon, stations — sized for the sidebar.
  */
-export function TransitItineraryInline({ legs, t }: {
+export function TransitItineraryInline({ legs, selectedLines, t }: {
   legs: TransitLegDisplay[]
+  selectedLines?: Record<string, string>
   t: (k: string, p?: Record<string, string | number>) => string
 }) {
+  const shownLegs = selectTransitAlternatives(legs, selectedLines)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-      {legs.map((leg, i) => {
+      {shownLegs.map((leg, i) => {
         if (leg.mode === 'WALK') return <TransitWalkDivider key={i} leg={leg} t={t} size="sm" />
         const mins = leg.duration ? Math.round(leg.duration / 60) : null
         return (
@@ -79,7 +82,7 @@ export function TransitItineraryInline({ legs, t }: {
               background: leg.line_color || 'var(--bg-tertiary)',
               color: leg.line_color ? (leg.line_text_color || '#fff') : 'var(--text-primary)',
             }}>
-              {leg.line || leg.mode}
+              {leg.line ? (/BUS/i.test(leg.mode || '') ? compactTransitLine(leg.line).replace(/区间$/, '路区间').replace(/^(\d+)$/, '$1路') : compactTransitLine(leg.line)) : leg.mode}
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="text-content" style={{ fontSize: 'calc(11px * var(--fs-scale-caption, 1))', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
@@ -167,15 +170,17 @@ export function TransitTitle({ title, iconSize = 12 }: { title: string; iconSize
  * icon (sub-minute walks are dropped); transit legs are line badges in their
  * colors. Optionally appends "· N transfers" — never a redundant "direct".
  */
-export function TransitLegChips({ legs, transfers, size = 'sm', t }: {
+export function TransitLegChips({ legs, transfers, selectedLines, size = 'sm', t }: {
   legs: TransitLegDisplay[]
   transfers?: number
+  selectedLines?: Record<string, string>
   size?: 'sm' | 'md'
   t: (k: string, p?: Record<string, string | number>) => string
 }) {
   const badgeFont = size === 'sm' ? 'calc(9.5px * var(--fs-scale-caption, 1))' : 'calc(10.5px * var(--fs-scale-caption, 1))'
   const walkIcon = size === 'sm' ? 10 : 12
-  const shown = legs.filter(l => l.mode !== 'WALK' || (l.duration || 0) >= 60)
+  const shown = selectTransitAlternatives(legs, selectedLines).filter(l => l.mode !== 'WALK' || (l.duration || 0) >= 60)
+  const effectiveTransfers = correctedTransferCount(legs, transfers)
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: size === 'sm' ? 4 : 5, flexWrap: 'wrap' }}>
       {shown.map((leg, i) => (
@@ -199,9 +204,9 @@ export function TransitLegChips({ legs, transfers, size = 'sm', t }: {
           )}
         </React.Fragment>
       ))}
-      {typeof transfers === 'number' && transfers > 0 && (
+      {typeof transfers === 'number' && effectiveTransfers > 0 && (
         <span className="text-content-faint" style={{ fontSize: badgeFont, marginLeft: 2 }}>
-          · {t('transit.transfers', { count: transfers })}
+          · {t('transit.transfers', { count: effectiveTransfers })}
         </span>
       )}
     </span>

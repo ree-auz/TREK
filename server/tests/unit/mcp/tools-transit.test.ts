@@ -171,6 +171,8 @@ describe('MCP transit tools', () => {
     // so the fixture stays as it is instead of growing fields nothing here looks at.
     geocodeMock.mockResolvedValue({ results: [from as TransitPlace] });
     planMock.mockResolvedValue({
+      source: 'transitous',
+      fallbackUsed: false,
       itineraries: [
         itinerary,
         { ...itinerary, legs: [itinerary.legs[0]] },
@@ -496,7 +498,7 @@ describe('MCP transit tools', () => {
       ...itinerary,
       legs: itinerary.legs.map((leg) => (leg.mode === 'WALK' ? leg : { ...leg, mode: 'AIRPLANE' })),
     };
-    planMock.mockResolvedValue({ itineraries: [flying] });
+    planMock.mockResolvedValue({ source: 'transitous', fallbackUsed: false, itineraries: [flying] });
 
     await withHarness(user.id, ['geo:read'], async (harness) => {
       const routes = parseToolResult(
@@ -523,7 +525,7 @@ describe('MCP transit tools', () => {
   it('reports how many provider itineraries failed validation', async () => {
     const { user } = createUser(testDb);
     const walkOnly = { ...itinerary, legs: [itinerary.legs[0]] };
-    planMock.mockResolvedValue({ itineraries: [itinerary, walkOnly] });
+    planMock.mockResolvedValue({ source: 'transitous', fallbackUsed: false, itineraries: [itinerary, walkOnly] });
 
     await withHarness(user.id, ['geo:read'], async (harness) => {
       const routes = parseToolResult(

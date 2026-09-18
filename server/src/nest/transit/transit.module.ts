@@ -1,12 +1,14 @@
-import { RateLimitModule } from '../common/rate-limit.module';
-import { Module } from '@nestjs/common';
-import { TransitController } from './transit.controller';
-import { TransitService } from './transit.service';
-import { TransitMcp } from './transit.mcp';
-import { DaysModule } from '../days/days.module';
-import { ReservationsModule } from '../reservations/reservations.module';
 import { AuthModule } from '../auth/auth.module';
+import { RateLimitModule } from '../common/rate-limit.module';
+import { DaysModule } from '../days/days.module';
+import { MapsModule } from '../maps/maps.module';
 import { McpSharedModule } from '../mcp-shared/mcp-shared.module';
+import { ReservationsModule } from '../reservations/reservations.module';
+import { AmapTransitProvider } from './amap-transit.provider';
+import { TransitController } from './transit.controller';
+import { TransitMcp } from './transit.mcp';
+import { TransitService } from './transit.service';
+import { Module } from '@nestjs/common';
 
 /**
  * Transit domain (#1065) — the Transitous/MOTIS proxy. TransitMcp carries the
@@ -15,9 +17,9 @@ import { McpSharedModule } from '../mcp-shared/mcp-shared.module';
  */
 @Module({
   // DaysModule + ReservationsModule: TransitMcp's create_transit_journey injects both.
-  imports: [McpSharedModule, RateLimitModule, DaysModule, ReservationsModule, AuthModule],
+  imports: [McpSharedModule, RateLimitModule, DaysModule, ReservationsModule, AuthModule, MapsModule],
   controllers: [TransitController],
-  providers: [TransitService, TransitMcp],
+  providers: [TransitService, TransitMcp, AmapTransitProvider],
   exports: [TransitService],
 })
 export class TransitModule {}

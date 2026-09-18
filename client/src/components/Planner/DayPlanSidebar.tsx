@@ -5,7 +5,7 @@ declare global { interface Window { __dragData: DragDataPayload | null } }
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react'
 import { avatarSrc } from '../../utils/avatarSrc'
 import { safeHttpUrl } from '../../utils/safeUrl'
-import { ChevronDown, ChevronRight, ChevronUp, Compass, Navigation, RotateCcw, ExternalLink, Clock, Pencil, GripVertical, Ticket, Plus, FileText, Trash2, Car, Lock, Hotel, Footprints, Route as RouteIcon, Bookmark, StickyNote, TramFront, Zap } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronUp, Compass, Navigation, RotateCcw, ExternalLink, Clock, Pencil, GripVertical, Ticket, Plus, FileText, Trash2, Car, Lock, Hotel, Footprints, Route as RouteIcon, Bookmark, StickyNote, TramFront, Zap, Bike } from 'lucide-react'
 import { type PickedPlace } from './TransitSearchPanel'
 import { assignmentsApi, reservationsApi, daysApi } from '../../api/client'
 import { calculateRouteWithLegs, optimizeRoute, generateGoogleMapsUrl, generateCoMapsUrl, type NamedWaypoint } from '../Map/RouteCalculator'
@@ -1209,16 +1209,23 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
   // Per-day colours from the dayTintProvider hook — e.g. which leg of the trip a
   // day belongs to. Empty unless a granted plugin provides them.
   const dayTints = usePluginDayTints(S.tripId)
+  const tripGeoProvider = useTripStore(s => s.trip?.geo_provider)
   const routeProfileOptions = useMemo(() => {
     const opts: Array<{ key: string; label: string }> = [
       { key: 'driving', label: 'Driving' },
       { key: 'walking', label: 'Walking' },
     ]
+    if (tripGeoProvider === 'amap') {
+      opts.push(
+        { key: 'cycling', label: S.t('reservations.type.bicycle') },
+        { key: 'electrobike', label: S.t('dayplan.profileElectrobike') },
+      )
+    }
     for (const p of activePlugins) {
       for (const prof of p.routeProfiles ?? []) opts.push({ key: `plugin:${p.id}/${prof.id}`, label: prof.label })
     }
     return opts
-  }, [activePlugins])
+  }, [S.t, activePlugins, tripGeoProvider])
   const {
     tripId,
     trip,
@@ -1361,7 +1368,7 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
   // ── Per-segment / per-day travel mode (#1281) ──────────────────────────────
   // Icon per mode, matching the route picker (driving→Car, walking→Footprints,
   // any plugin profile→Zap).
-  const modeIcon = (key: string) => (key === 'walking' ? Footprints : key.startsWith('plugin:') ? Zap : Car)
+  const modeIcon = (key: string) => (key === 'walking' ? Footprints : key === 'cycling' || key === 'electrobike' ? Bike : key.startsWith('plugin:') ? Zap : Car)
 
   // Set the mode of the leg LEAVING this stop. Optimistic (the connector + map
   // recompute from the store), then persisted; null clears the override so the leg
@@ -2446,12 +2453,31 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                                 <GripVertical size={13} strokeWidth={1.8} />
                               </div>
                             )}
-                            <div style={{
-                              width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              borderRadius: '50%', background: `${color}18`,
-                            }}>
-                              <TransportIcon size={14} strokeWidth={1.8} color={color} />
-                            </div>
+                            {transitMeta && onToggleConnection ? (() => {
+                              const active = visibleConnectionIds.includes(res.id)
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={event => { event.stopPropagation(); onToggleConnection(res.id) }}
+                                  title={t(active ? 'map.hideConnections' : 'map.showConnections')}
+                                  aria-pressed={active}
+                                  style={{
+                                    width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    borderRadius: '50%', border: 'none', cursor: 'pointer',
+                                    background: active ? color : `${color}18`,
+                                  }}
+                                >
+                                  <TransportIcon size={14} strokeWidth={1.8} color={active ? '#fff' : color} />
+                                </button>
+                              )
+                            })() : (
+                              <div style={{
+                                width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                borderRadius: '50%', background: `${color}18`,
+                              }}>
+                                <TransportIcon size={14} strokeWidth={1.8} color={color} />
+                              </div>
+                            )}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                 {spanLabel && (
@@ -2482,7 +2508,7 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                               </div>
                               {transitMeta ? (
                                 <div style={{ display: 'flex', alignItems: 'center', marginTop: 3 }}>
-                                  <TransitLegChips legs={transitMeta.legs} size="sm" t={t} />
+                                  <TransitLegChips legs={transitMeta.legs} selectedLines={transitMeta.selected_lines} size="sm" t={t} />
                                 </div>
                               ) : subtitle && (
                                 <div style={{ fontSize: 'calc(10px * var(--fs-scale-caption, 1))', color: 'var(--text-faint)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -2543,7 +2569,11 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                           </div>
                           {transitMeta && expandedTransitIds.has(res.id) && (
                             <div style={{ margin: '2px 8px 4px', padding: '9px 10px 9px 12px', borderRadius: 6, border: `1px solid ${color}26`, background: `${color}05` }}>
-                              <TransitItineraryInline legs={transitMeta.legs} t={t} />
+                          <TransitItineraryInline
+                            legs={transitMeta.legs}
+                            selectedLines={transitMeta.selected_lines}
+                            t={t}
+                          />
                             </div>
                           )}
                           {daySchedule.byReservation[day.id]?.[res.id]?.map(si => <PluginDayScheduleRow key={`${si.pluginId}:${si.id}`} item={si} />)}
@@ -2822,7 +2852,7 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                         </button>
                         <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-faint)', flexShrink: 0 }}>
                           {routeProfileOptions.map(p => {
-                            const ModeIcon = p.key === 'driving' ? Car : p.key === 'walking' ? Footprints : Zap
+                            const ModeIcon = p.key === 'driving' ? Car : p.key === 'walking' ? Footprints : p.key === 'cycling' || p.key === 'electrobike' ? Bike : Zap
                             const active = (day.default_transport_mode ?? routeProfile) === p.key
                             return (
                               <button type="button"

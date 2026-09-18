@@ -108,6 +108,7 @@ describe('TransitSearchPanel', () => {
     expect(await screen.findByText(/08:30 – 09:00/)).toBeInTheDocument()
     expect(screen.getByText('U2')).toBeInTheDocument()
     expect(screen.getByText('1 transfers')).toBeInTheDocument()
+    expect(screen.getByText('4 min · 300 m')).toBeInTheDocument()
   })
 
   it('FE-PLANNER-TRANSIT-003: adding a route builds a transport payload with local times + endpoints', async () => {
@@ -134,6 +135,7 @@ describe('TransitSearchPanel', () => {
     expect(payload.endpoints[1]).toMatchObject({ role: 'to', name: 'Zoologischer Garten' })
     // compact itinerary stored for the detail modal
     expect(payload.metadata.transit.provider).toBe('transitous')
+    expect(payload.metadata.transit.walk_distance).toBe(300)
     expect(payload.metadata.transit.legs).toHaveLength(2)
     expect(payload.metadata.transit.legs[1]).toMatchObject({ mode: 'SUBWAY', line: 'U2', line_color: '#FF3300', headsign: 'Ruhleben' })
   })

@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': 'Conexões',
   'map.showConnections': 'Mostrar rotas de reservas',
   'map.hideConnections': 'Ocultar rotas de reservas',
-  'poi.searchThisArea': 'Pesquisar nesta área',
+'poi.searchThisArea': 'Pesquisar nesta área',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'Restaurantes',
   'poi.cat.cafes': 'Cafés',
   'poi.cat.bars': 'Bares e vida noturna',
@@ -19,7 +23,8 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': 'Satélite',
   'map.baseLayer.switchToSatellite': 'Mudar para vista de satélite',
   'map.baseLayer.switchToDefault': 'Mudar para vista de mapa',
-  'map.location.denied': 'O acesso à localização está bloqueado. Verifique as configurações do aparelho; um app instalado tem permissão de localização própria, separada do navegador.',
+  'map.location.denied':
+    'O acesso à localização está bloqueado. Verifique as configurações do aparelho; um app instalado tem permissão de localização própria, separada do navegador.',
   'map.location.unavailable': 'Não foi possível determinar sua localização.',
   'map.location.timeout': 'A localização demorou demais. Tente de novo com uma visão mais aberta do céu.',
 };

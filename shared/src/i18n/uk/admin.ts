@@ -435,7 +435,8 @@ const admin: TranslationStrings = {
   'admin.plugins.changeVersion': 'Змінити версію…',
   'admin.plugins.noVersions': 'У реєстрі не знайдено опублікованих версій.',
   'admin.plugins.downgradeTitle': 'Відкотити цей плагін?',
-  'admin.plugins.downgradeBody': 'Перехід з v{from} на v{to}: дані, записані новішою версією, залишаються, і старіша версія може їх не розуміти.',
+  'admin.plugins.downgradeBody':
+    'Перехід з v{from} на v{to}: дані, записані новішою версією, залишаються, і старіша версія може їх не розуміти.',
   'admin.plugins.downgradeConfirm': 'Відкотити',
   'admin.plugins.updatesHeld': 'Оновлення призупинено на v{version}',
   'admin.plugins.resumeUpdates': 'Відновити оновлення',
@@ -531,7 +532,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.airtrail.name': 'AirTrail',
   'admin.addons.catalog.airtrail.description': 'Синхронізація рейсів із вашого сервера AirTrail',
   'admin.addons.catalog.llm_parsing.name': 'Розбір за допомогою ШІ',
-  'admin.addons.catalog.llm_parsing.description': 'Читає бронювання, які не розпізнає вбудований аналізатор, за допомогою обраної вами моделі ШІ',
+  'admin.addons.catalog.llm_parsing.description':
+    'Читає бронювання, які не розпізнає вбудований аналізатор, за допомогою обраної вами моделі ШІ',
   'admin.addons.enabled': 'Увімкнено',
   'admin.addons.disabled': 'Вимкнено',
   'admin.addons.type.trip': 'Поїздка',
@@ -676,7 +678,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.journey.description':
     'Відстеження поїздок і щоденник подорожей з позначками, фото та щоденними історіями',
   'admin.addons.catalog.collections.name': 'Колекції',
-  'admin.addons.catalog.collections.description': 'Збирайте місця з будь-яких подорожей у іменовані списки та використовуйте їх знову',
+  'admin.addons.catalog.collections.description':
+    'Збирайте місця з будь-яких подорожей у іменовані списки та використовуйте їх знову',
   'admin.passkey.title': 'Вхід за допомогою passkey',
   'admin.passkey.cardHint':
     'Дозволити користувачам входити за допомогою passkey (WebAuthn). За замовчуванням вимкнено.',

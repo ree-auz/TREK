@@ -67,6 +67,8 @@ const transitLegSchema = z.object({
   lineTextColor: colorSchema,
   agency: z.string().max(300).nullable(),
   intermediateStops: z.number().int().nonnegative(),
+  stopNodes: z.array(transitStopSchema).optional(),
+  alternativeGroup: z.string().optional(),
   geometry: z.string().max(MAX_GEOMETRY_CHARS).nullable(),
   geometryPrecision: z.number().int().min(0).max(10),
 });
@@ -292,6 +294,8 @@ export function buildTransitReservationParts(
           agency: leg.agency,
           duration: leg.duration,
           stops: leg.intermediateStops,
+          ...(leg.stopNodes !== undefined ? { stop_nodes: leg.stopNodes } : {}),
+          ...(leg.alternativeGroup !== undefined ? { alternative_group: leg.alternativeGroup } : {}),
           from: {
             name: leg.from.name,
             time: fromTime ? transitLocalParts(fromTime, timezoneFor(leg.from.lat, leg.from.lng)).time : null,

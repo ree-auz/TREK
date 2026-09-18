@@ -4257,6 +4257,18 @@ function runMigrations(db: Database.Database): void {
         db.exec('ALTER TABLE journey_entries ADD COLUMN stats_excluded INTEGER NOT NULL DEFAULT 0');
       }
     },
+    /**
+     * Explicit per-trip geography provider for the mainland-China Amap integration.
+     * Existing trips remain on TREK's original global provider stack.
+     *
+     * Appended LAST: the array is index-addressed against schema_version.
+     */
+    () => {
+      const cols = db.prepare("SELECT name FROM pragma_table_info('trips')").all() as Array<{ name: string }>;
+      if (!cols.some((c) => c.name === 'geo_provider')) {
+        db.exec("ALTER TABLE trips ADD COLUMN geo_provider TEXT NOT NULL DEFAULT 'global' CHECK (geo_provider IN ('global', 'amap'))");
+      }
+    },
   ];
 
   if (currentVersion < migrations.length) {

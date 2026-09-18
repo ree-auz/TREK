@@ -238,6 +238,17 @@ export class SettingsService {
       merged.carto_api_key = managedMaps.cartoKey;
     }
 
+    // Amap JS credentials are instance-owned browser configuration. They are
+    // read-only here: users select Amap per Trip, but cannot replace the
+    // operator's key or security mode through the settings API. AMAP_WEB_KEY is
+    // deliberately in another config namespace and is never returned.
+    if (managedMaps.amapJsKey) merged.amap_js_key = managedMaps.amapJsKey;
+    if (managedMaps.amapJsSecurityServiceHost) {
+      merged.amap_js_security_service_host = managedMaps.amapJsSecurityServiceHost;
+    } else if (managedMaps.amapJsSecurityCode) {
+      merged.amap_js_security_code = managedMaps.amapJsSecurityCode;
+    }
+
     return merged;
   }
 

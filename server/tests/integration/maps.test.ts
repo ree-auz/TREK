@@ -403,6 +403,7 @@ describe('Maps autocomplete', () => {
       'fr',
       { low: { lat: 48.5, lng: 2.0 }, high: { lat: 49.0, lng: 2.8 } },
       undefined,
+      false,
     );
   });
 

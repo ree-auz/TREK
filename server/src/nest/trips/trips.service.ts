@@ -54,6 +54,7 @@ interface CreateTripData {
   currency?: string;
   reminder_days?: number;
   day_count?: number;
+  geo_provider?: 'global' | 'amap';
 }
 
 // Nullable where the wire contract (tripUpdateRequestSchema) is nullable — the
@@ -69,6 +70,7 @@ interface UpdateTripData {
   reminder_days?: number;
   day_count?: number;
   date_shift_mode?: 'keep_bookings' | 'shift_all';
+  geo_provider?: 'global' | 'amap';
 }
 
 export interface UpdateTripResult {
@@ -315,9 +317,9 @@ export class TripsService {
       : 3;
 
     const result = this.db.prepare(`
-      INSERT INTO trips (user_id, title, description, start_date, end_date, currency, reminder_days)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(userId, data.title, data.description || null, data.start_date || null, data.end_date || null, data.currency || 'EUR', rd);
+      INSERT INTO trips (user_id, title, description, start_date, end_date, currency, reminder_days, geo_provider)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(userId, data.title, data.description || null, data.start_date || null, data.end_date || null, data.currency || 'EUR', rd, data.geo_provider ?? 'global');
 
     const tripId = result.lastInsertRowid;
     this.generateDays(tripId, data.start_date || null, data.end_date || null, maxDays, data.day_count);
@@ -384,7 +386,7 @@ export class TripsService {
     const trip = this.db.prepare('SELECT * FROM trips WHERE id = ?').get(tripId) as Trip & { reminder_days?: number } | undefined;
     if (!trip) throw new NotFoundError('Trip not found');
 
-    const { title, description, start_date, end_date, currency, is_archived, cover_image, reminder_days } = data;
+    const { title, description, start_date, end_date, currency, is_archived, cover_image, reminder_days, geo_provider } = data;
 
     if (start_date && end_date && new Date(end_date) < new Date(start_date))
       throw new ValidationError('End date must be after start date');
@@ -396,6 +398,7 @@ export class TripsService {
     const newCurrency = currency || trip.currency;
     const newArchived = is_archived !== undefined ? (is_archived ? 1 : 0) : trip.is_archived;
     const newCover = cover_image !== undefined ? cover_image : trip.cover_image;
+    const newGeoProvider = geo_provider ?? trip.geo_provider ?? 'global';
     const oldReminder = (trip as any).reminder_days ?? 3;
     const newReminder = reminder_days !== undefined
       ? (Number(reminder_days) >= 0 && Number(reminder_days) <= 30 ? Number(reminder_days) : oldReminder)
@@ -403,9 +406,9 @@ export class TripsService {
 
     this.db.prepare(`
       UPDATE trips SET title=?, description=?, start_date=?, end_date=?,
-        currency=?, is_archived=?, cover_image=?, reminder_days=?, updated_at=CURRENT_TIMESTAMP
+        currency=?, is_archived=?, cover_image=?, reminder_days=?, geo_provider=?, updated_at=CURRENT_TIMESTAMP
       WHERE id=?
-    `).run(newTitle, newDesc, newStart || null, newEnd || null, newCurrency, newArchived, newCover, newReminder, tripId);
+    `).run(newTitle, newDesc, newStart || null, newEnd || null, newCurrency, newArchived, newCover, newReminder, newGeoProvider, tripId);
 
     if (trip.start_date && trip.end_date && newStart && newStart !== trip.start_date)
       this.vacay.shiftOwnerEntriesForTripWindow(trip.user_id, trip.start_date, trip.end_date, newStart);
@@ -443,6 +446,7 @@ export class TripsService {
     if (newStart !== trip.start_date) changes.start_date = newStart;
     if (newEnd !== trip.end_date) changes.end_date = newEnd;
     if (newReminder !== oldReminder) changes.reminder_days = newReminder === 0 ? 'none' : `${newReminder} days`;
+    if (newGeoProvider !== (trip.geo_provider ?? 'global')) changes.geo_provider = newGeoProvider;
     if (is_archived !== undefined && newArchived !== trip.is_archived) changes.archived = !!newArchived;
 
     const isAdminEdit = userRole === 'admin' && trip.user_id !== userId;
@@ -533,9 +537,9 @@ export class TripsService {
 
     const fn = this.db.transaction(() => {
       const tripResult = this.db.prepare(`
-        INSERT INTO trips (user_id, title, description, start_date, end_date, currency, cover_image, is_archived, reminder_days)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
-      `).run(newOwnerId, newTitle, src.description, src.start_date, src.end_date, src.currency, src.cover_image, src.reminder_days ?? 3);
+        INSERT INTO trips (user_id, title, description, start_date, end_date, currency, cover_image, is_archived, reminder_days, geo_provider)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+      `).run(newOwnerId, newTitle, src.description, src.start_date, src.end_date, src.currency, src.cover_image, src.reminder_days ?? 3, src.geo_provider ?? 'global');
       const newTripId = tripResult.lastInsertRowid;
 
       const oldDays = this.db.prepare('SELECT * FROM days WHERE trip_id = ? ORDER BY day_number').all(sourceTripId) as any[];

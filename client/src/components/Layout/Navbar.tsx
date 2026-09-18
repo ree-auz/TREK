@@ -6,7 +6,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { useAddonStore } from '../../store/addonStore'
 import { usePluginStore } from '../../store/pluginStore'
 import { useTranslation } from '../../i18n'
-import { Plane, LogOut, Settings, ChevronDown, Shield, ArrowLeft, Users, Moon, Sun, Monitor, CalendarDays, Briefcase, Globe, Compass, BookOpen, Bookmark } from 'lucide-react'
+import { Plane, LogOut, Settings, ChevronDown, Shield, ArrowLeft, Users, Moon, Sun, Monitor, CalendarDays, Briefcase, Globe, Compass, BookOpen, Bookmark, Pencil } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import InAppNotificationBell from './InAppNotificationBell.tsx'
 import { resolvePluginIcon } from '../shared/PluginIcon'
@@ -19,6 +19,7 @@ interface NavbarProps {
   tripId?: number | string
   onBack?: () => void
   showBack?: boolean
+  onEditTrip?: () => void
   onShare?: () => void
 }
 
@@ -30,7 +31,7 @@ interface Addon {
   enabled: boolean
 }
 
-export default function Navbar({ tripTitle, tripId, onBack, showBack, onShare }: NavbarProps): React.ReactElement {
+export default function Navbar({ tripTitle, tripId, onBack, showBack, onEditTrip, onShare }: NavbarProps): React.ReactElement {
   const { user, logout, isPrerelease, appVersion } = useAuthStore()
   const { settings, updateSetting } = useSettingsStore()
   const { addons: allAddons, loadAddons } = useAddonStore()
@@ -212,6 +213,16 @@ export default function Navbar({ tripTitle, tripId, onBack, showBack, onShare }:
           loose siblings, which centred nothing and left the pill to fend for
           itself on top of them. */}
       <div className="flex items-center gap-4 flex-1 basis-0 min-w-0 justify-end">
+
+      {onEditTrip && (
+        <button type="button" onClick={onEditTrip}
+          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg border transition-colors text-sm font-medium flex-shrink-0 border-edge text-content-secondary bg-surface-card"
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}>
+          <Pencil className="w-4 h-4" />
+          <span className="hidden sm:inline">{t('dashboard.editTrip')}</span>
+        </button>
+      )}
 
       {/* Share button */}
       {onShare && (

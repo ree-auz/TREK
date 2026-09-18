@@ -326,7 +326,8 @@ const admin: TranslationStrings = {
     'Colorir os dias no plano do dia (por exemplo, a qual trecho da viagem um dia pertence)',
   'admin.plugins.cap.mcpTools': 'Publica ferramentas de IA',
   'admin.plugins.mcpToolsTitle': 'Ferramentas de IA publicadas',
-  'admin.plugins.mcpToolsHint': 'Um assistente pode executá-las em nome de um usuário. Cada uma age com o acesso concedido acima.',
+  'admin.plugins.mcpToolsHint':
+    'Um assistente pode executá-las em nome de um usuário. Cada uma age com o acesso concedido acima.',
   'admin.plugins.perm.mcp:tools':
     'Publicar ferramentas que um assistente de IA pode executar em seu nome (ele age com o acesso que você concede ao plugin aqui, não com o dele)',
   'admin.plugins.perm.geolocation:read':
@@ -430,7 +431,8 @@ const admin: TranslationStrings = {
   'admin.plugins.changeVersion': 'Alterar versão…',
   'admin.plugins.noVersions': 'Nenhuma versão publicada encontrada no registro.',
   'admin.plugins.downgradeTitle': 'Reverter este plugin?',
-  'admin.plugins.downgradeBody': 'Mudando de v{from} para v{to}: os dados gravados pela versão mais recente permanecem no lugar, e a versão mais antiga pode não entendê-los.',
+  'admin.plugins.downgradeBody':
+    'Mudando de v{from} para v{to}: os dados gravados pela versão mais recente permanecem no lugar, e a versão mais antiga pode não entendê-los.',
   'admin.plugins.downgradeConfirm': 'Reverter',
   'admin.plugins.updatesHeld': 'Atualizações pausadas em v{version}',
   'admin.plugins.resumeUpdates': 'Retomar atualizações',
@@ -526,7 +528,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.airtrail.name': 'AirTrail',
   'admin.addons.catalog.airtrail.description': 'Sincronize voos da sua instância AirTrail',
   'admin.addons.catalog.llm_parsing.name': 'Análise por IA',
-  'admin.addons.catalog.llm_parsing.description': 'Lê reservas que o analisador integrado não entende, usando um modelo de IA à sua escolha',
+  'admin.addons.catalog.llm_parsing.description':
+    'Lê reservas que o analisador integrado não entende, usando um modelo de IA à sua escolha',
   'admin.addons.enabled': 'Ativado',
   'admin.addons.disabled': 'Desativado',
   'admin.addons.type.trip': 'Viagem',

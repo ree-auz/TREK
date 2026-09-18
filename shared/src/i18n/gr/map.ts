@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': 'Συνδέσεις',
   'map.showConnections': 'Εμφάνιση διαδρομών κρατήσεων',
   'map.hideConnections': 'Απόκρυψη διαδρομών κρατήσεων',
-  'poi.searchThisArea': 'Αναζήτηση σε αυτήν την περιοχή',
+'poi.searchThisArea': 'Αναζήτηση σε αυτήν την περιοχή',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'Εστιατόρια',
   'poi.cat.cafes': 'Καφέ',
   'poi.cat.bars': 'Μπαρ & νυχτερινή ζωή',
@@ -19,7 +23,8 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': 'Δορυφόρος',
   'map.baseLayer.switchToSatellite': 'Εναλλαγή σε δορυφορική προβολή',
   'map.baseLayer.switchToDefault': 'Εναλλαγή σε προβολή χάρτη',
-  'map.location.denied': 'Η πρόσβαση στην τοποθεσία είναι αποκλεισμένη. Ελέγξτε τις ρυθμίσεις της συσκευής. Μια εγκατεστημένη εφαρμογή έχει δική της άδεια τοποθεσίας, ξεχωριστή από το πρόγραμμα περιήγησης.',
+  'map.location.denied':
+    'Η πρόσβαση στην τοποθεσία είναι αποκλεισμένη. Ελέγξτε τις ρυθμίσεις της συσκευής. Μια εγκατεστημένη εφαρμογή έχει δική της άδεια τοποθεσίας, ξεχωριστή από το πρόγραμμα περιήγησης.',
   'map.location.unavailable': 'Δεν ήταν δυνατός ο προσδιορισμός της τοποθεσίας σας.',
   'map.location.timeout': 'Ο εντοπισμός της θέσης σας άργησε πολύ. Δοκιμάστε ξανά με καθαρή θέα στον ουρανό.',
 };

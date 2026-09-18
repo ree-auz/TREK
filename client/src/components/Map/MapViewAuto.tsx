@@ -3,6 +3,9 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { MapView } from './MapView'
 import ErrorBoundary from '../shared/ErrorBoundary'
 import { MapViewGLMapbox, MapViewGLMaplibre } from './glLazy'
+import { AmapMapViewLazy } from './amapLazy'
+import { useTripStore } from '../../store/tripStore'
+import type { MapViewProps } from './mapViewProps'
 
 // Auto-selects the map renderer based on user settings. Keeps the existing
 // Leaflet MapView untouched so the Mapbox GL variant can mature iteratively
@@ -12,10 +15,27 @@ import { MapViewGLMapbox, MapViewGLMaplibre } from './glLazy'
 // tiles via sync/tilePrefetcher.ts). GL maps are best-effort offline — their
 // vector tiles are cached opportunistically by the Service Worker as you view
 // them online (see the GL tile rules in vite.config.js), not prefetched.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function MapViewAuto(props: any) {
+export function MapViewAuto(props: MapViewProps) {
   const provider = useSettingsStore(s => s.settings.map_provider)
   const token = useSettingsStore(s => s.settings.mapbox_access_token)
+  const amapJsKey = useSettingsStore(s => s.settings.amap_js_key)
+  const trip = useTripStore(s => s.trip)
+  const isAmapTrip = props.tripId != null
+    && String(trip?.id) === String(props.tripId)
+    && trip?.geo_provider === 'amap'
+
+  // Geography provider is Trip-scoped, while map_provider remains the user's
+  // renderer preference for the global stack. Missing browser credentials must
+  // leave the trip usable, so Leaflet is the explicit safe fallback.
+  if (isAmapTrip && amapJsKey) {
+    return (
+      <ErrorBoundary boundaryId="map:amap" resetKeys={[props.tripId, amapJsKey]} fallback={<MapView {...props} />}>
+        <Suspense fallback={<MapView {...props} />}>
+          <AmapMapViewLazy {...props} />
+        </Suspense>
+      </ErrorBoundary>
+    )
+  }
   // Fall back to Leaflet when Mapbox is selected but no token is set,
   // so trip planner never shows an empty map due to a missing token.
   const glProvider = provider === 'maplibre-gl' ? 'maplibre-gl'

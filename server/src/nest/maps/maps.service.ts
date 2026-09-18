@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import type {
   MapsSearchResult,
   MapsAutocompleteResult,
@@ -15,6 +15,8 @@ import { resolveApiKey, type ApiKeySource } from '../settings/instance-api-keys'
 import { PlacePhotoCacheService } from '../place-photos/place-photo-cache.service';
 import { DatabaseService } from '../database/database.service';
 import { nominatimFetch, type GeoLane } from '../geo/nominatim.client';
+import { AmapPlacesProvider } from './amap-places.provider';
+import { TripGeoProviderService } from './trip-geo-provider.service';
 import {
   UA,
   SEARCH_TEXT_FIELD_MASK,
@@ -521,6 +523,8 @@ export class MapsService {
   constructor(
     private readonly database: DatabaseService,
     private readonly photoCache: PlacePhotoCacheService,
+    @Optional() private readonly amap: AmapPlacesProvider = new AmapPlacesProvider(),
+    @Optional() private readonly tripGeoProvider: TripGeoProviderService = new TripGeoProviderService(database),
   ) {}
 
   private isSettingDisabled(key: string): boolean {
@@ -545,12 +549,12 @@ export class MapsService {
 
   // ── Controller-facing surface (unchanged signatures) ───────────────────────
 
-  search(userId: number, query: string, lang?: string, locationBias?: { lat: number; lng: number; radius?: number }): Promise<MapsSearchResult> {
-    return this.searchPlaces(userId, query, lang, locationBias) as Promise<MapsSearchResult>;
+  search(userId: number, query: string, lang?: string, locationBias?: { lat: number; lng: number; radius?: number }, tripId?: number): Promise<MapsSearchResult> {
+    return this.searchPlaces(userId, query, lang, locationBias, this.tripGeoProvider.resolve(userId, tripId) === 'amap') as Promise<MapsSearchResult>;
   }
 
-  autocomplete(userId: number, input: string, lang?: string, locationBias?: LocationBias, sessionToken?: string): Promise<MapsAutocompleteResult> {
-    return this.autocompletePlaces(userId, input, lang, locationBias, sessionToken) as Promise<MapsAutocompleteResult>;
+  autocomplete(userId: number, input: string, lang?: string, locationBias?: LocationBias, sessionToken?: string, tripId?: number): Promise<MapsAutocompleteResult> {
+    return this.autocompletePlaces(userId, input, lang, locationBias, sessionToken, this.tripGeoProvider.resolve(userId, tripId) === 'amap') as Promise<MapsAutocompleteResult>;
   }
 
   details(userId: number, placeId: string, lang?: string, sessionToken?: string): Promise<MapsPlaceDetailsResult> {
@@ -1452,7 +1456,16 @@ export class MapsService {
     query: string,
     lang?: string,
     locationBias?: { lat: number; lng: number; radius?: number },
+    preferAmap = false,
   ): Promise<{ places: Record<string, unknown>[]; source: string }> {
+    if (preferAmap && this.amap.enabled()) {
+      try {
+        const places = await this.amap.search(query, lang, locationBias);
+        if (places.length > 0) return { places, source: 'amap' };
+      } catch (err) {
+        console.warn(`[Maps] Amap search failed; using existing provider: ${err instanceof Error ? err.message : 'provider error'}`);
+      }
+    }
     const { key: apiKey, source: keySource } = this.resolveMapsKey(userId);
 
     if (!apiKey) {
@@ -1523,7 +1536,32 @@ export class MapsService {
     lang?: string,
     locationBias?: { low: { lat: number; lng: number }; high: { lat: number; lng: number } },
     sessionToken?: string,
+    preferAmap = false,
   ): Promise<{ suggestions: { placeId: string; mainText: string; secondaryText: string }[]; source: string }> {
+    const amapEnabled = this.amap.enabled();
+    if (preferAmap && amapEnabled) {
+      try {
+        const center = locationBias ? {
+          lat: (locationBias.low.lat + locationBias.high.lat) / 2,
+          lng: (locationBias.low.lng + locationBias.high.lng) / 2,
+        } : undefined;
+        const places = await this.amap.search(input, lang, center);
+        const suggestions = places.slice(0, 5).map((place) => ({
+          placeId: `amap:${String(place.amap_place_id)}`,
+          mainText: String(place.name ?? ''),
+          secondaryText: String(place.address ?? ''),
+        }));
+        if (suggestions.length > 0) {
+          console.debug(`[Maps] Amap autocomplete succeeded results=${suggestions.length}`);
+          return { suggestions, source: 'amap' };
+        }
+        console.debug('[Maps] Amap autocomplete returned no usable results; using existing provider');
+      } catch (err) {
+        console.warn(`[Maps] Amap autocomplete failed; using existing provider: ${err instanceof Error ? err.message : 'provider error'}`);
+      }
+    } else if (amapEnabled) {
+      console.debug('[Maps] Amap autocomplete skipped because this trip uses the global provider');
+    }
     const { key: apiKey, source: keySource } = this.resolveMapsKey(userId);
 
     if (!apiKey) {
@@ -1612,6 +1650,13 @@ export class MapsService {
     lang?: string,
     sessionToken?: string,
   ): Promise<{ place: Record<string, unknown> | null }> {
+    if (placeId.startsWith('amap:')) {
+      try { return { place: await this.amap.details(placeId.slice(5)) }; }
+      catch (err) {
+        console.warn(`[Maps] Amap details failed: ${err instanceof Error ? err.message : 'provider error'}`);
+        return { place: null };
+      }
+    }
     // OSM details: placeId is "node:123456" or "way:123456" etc.
     if (placeId.includes(':')) {
       const [osmType, osmId] = placeId.split(':');

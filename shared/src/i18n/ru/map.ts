@@ -4,7 +4,11 @@ const map: TranslationStrings = {
   'map.connections': 'Соединения',
   'map.showConnections': 'Показать маршруты бронирований',
   'map.hideConnections': 'Скрыть маршруты бронирований',
-  'poi.searchThisArea': 'Искать в этой области',
+'poi.searchThisArea': 'Искать в этой области',
+  'poi.discoveryLayers': 'Map information layers',
+  'poi.auxiliarySource': 'Auxiliary information · {source}',
+  'poi.addToTrip': 'Add to trip',
+  'poi.cat.toilets': 'Public toilets',
   'poi.cat.restaurants': 'Рестораны',
   'poi.cat.cafes': 'Кафе',
   'poi.cat.bars': 'Бары и ночная жизнь',
@@ -19,8 +23,10 @@ const map: TranslationStrings = {
   'map.baseLayer.satellite': 'Спутник',
   'map.baseLayer.switchToSatellite': 'Переключить на спутниковый вид',
   'map.baseLayer.switchToDefault': 'Переключить на вид карты',
-  'map.location.denied': 'Доступ к геопозиции заблокирован. Проверьте настройки устройства; у установленного приложения есть собственное разрешение на геопозицию, отдельное от браузера.',
+  'map.location.denied':
+    'Доступ к геопозиции заблокирован. Проверьте настройки устройства; у установленного приложения есть собственное разрешение на геопозицию, отдельное от браузера.',
   'map.location.unavailable': 'Не удалось определить ваше местоположение.',
-  'map.location.timeout': 'Определение местоположения заняло слишком много времени. Попробуйте ещё раз под открытым небом.',
+  'map.location.timeout':
+    'Определение местоположения заняло слишком много времени. Попробуйте ещё раз под открытым небом.',
 };
 export default map;

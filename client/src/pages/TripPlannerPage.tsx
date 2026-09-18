@@ -263,7 +263,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
     routeShown, setRouteShown, transitRoutesShown, routeProfile, setRouteProfile, routeVias, fitKey, setFitKey,
     mobileSidebarOpen, setMobileSidebarOpen, mobilePlanScrollTopRef, mobilePlacesScrollTopRef,
     deletePlaceId, setDeletePlaceId, deletePlaceIds, setDeletePlaceIds,
-    visibleConnections, toggleConnection, allConnectionsShown, toggleAllConnections, mapTransportDetail, setMapTransportDetail,
+    visibleConnections, mapVisibleConnections, toggleConnection, allConnectionsShown, toggleAllConnections, mapTransportDetail, setMapTransportDetail,
     isMobile, isTouch,
     expandedDayIds, setExpandedDayIds, mapPlaces,
     route, routeSegments, routeInfo, setRoute, setRouteInfo, updateRouteForDay,
@@ -296,7 +296,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
     setMobileSidebarOpen(null)
   } : undefined
 
-  const poi = usePoiExplore()
+  const poi = usePoiExplore(tripId)
   const [glMap, setGlMap] = useState<CompassMap | null>(null)
   const poiPillEnabled = useSettingsStore(s => s.settings.map_poi_pill_enabled) !== false
 
@@ -329,7 +329,9 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
 
   return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', ...fontStyle }}>
-      <Navbar tripTitle={trip.title} tripId={tripId} showBack onBack={() => navigate('/dashboard')} onShare={() => setShowMembersModal(true)} />
+      <Navbar tripTitle={trip.title} tripId={tripId} showBack onBack={() => navigate('/dashboard')}
+        onEditTrip={can('trip_edit', trip) ? () => setShowTripForm(true) : undefined}
+        onShare={() => setShowMembersModal(true)} />
 
       <div className="bg-surface-elevated border-b border-edge-faint" style={{
         position: 'fixed', top: 'var(--nav-h)', left: 0, right: 0, zIndex: 40,
@@ -365,6 +367,7 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               places={mapPlaces}
               dayPlaces={dayPlaces}
               route={route}
+              routeProfile={routeProfile}
               routeVias={routeVias}
               showTransitRoutes={transitRoutesShown}
               // The route toggle belongs to one day, so the map needs that day to
@@ -387,13 +390,13 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               hasDayDetail={!!showDayDetail && !selectedPlace}
               reservations={reservations}
               showReservationStats={true}
-              visibleConnectionIds={visibleConnections}
+              visibleConnectionIds={mapVisibleConnections}
               onReservationClick={(rid) => {
                 const r = reservations.find(x => x.id === rid)
                 if (r) setMapTransportDetail(r)
               }}
               pois={poi.pois}
-              onPoiClick={openAddPlaceFromPoi}
+              onPoiClick={poi.selectFeature}
               onViewportChange={poi.onViewportChange}
               onMapReady={setGlMap}
             />
@@ -401,7 +404,20 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
             {(poiPillEnabled || glMap) && (
               <div className="hidden md:flex" style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 25, pointerEvents: 'none', alignItems: 'flex-start', gap: 8 }}>
                 {poiPillEnabled && (
-                  <PoiCategoryPill active={poi.active} onToggle={poi.toggle} loadingKeys={poi.loadingKeys} errorKeys={poi.errorKeys} moved={poi.moved} onSearchArea={poi.searchArea} />
+                  <PoiCategoryPill
+                    active={poi.active}
+                    onToggle={poi.toggle}
+                    loadingKeys={poi.loadingKeys}
+                    errorKeys={poi.errorKeys}
+                    moved={poi.moved}
+                    onSearchArea={poi.searchArea}
+                    selectedFeature={poi.selectedFeature}
+                    onDismissFeature={poi.clearSelection}
+                    onAddFeature={(feature) => {
+                      openAddPlaceFromPoi(feature)
+                      poi.clearSelection()
+                    }}
+                  />
                 )}
                 {glMap && <MapCompassPill map={glMap} />}
               </div>
@@ -415,11 +431,24 @@ function TripPlannerPageDesktop(): React.ReactElement | null {
               </div>
             )}
 
-            {/* Mobile POI search controls live in a portal like the Plan/Places
+            {/* Mobile discovery-layer controls live in a portal like the Plan/Places
                 buttons so map touch handlers cannot swallow the tap targets. */}
             {poiPillEnabled && !mobileSidebarOpen && !showPlaceForm && !showMembersModal && !showReservationModal && createPortal(
               <div data-testid="mobile-poi-category-pill" className="flex md:hidden" style={{ position: 'fixed', left: 12, right: 12, bottom: 'calc(var(--bottom-nav-h, 0px) + 12px)', justifyContent: 'center', zIndex: 100, pointerEvents: 'none' }}>
-                <PoiCategoryPill active={poi.active} onToggle={poi.toggle} loadingKeys={poi.loadingKeys} errorKeys={poi.errorKeys} moved={poi.moved} onSearchArea={poi.searchArea} />
+                <PoiCategoryPill
+                  active={poi.active}
+                  onToggle={poi.toggle}
+                  loadingKeys={poi.loadingKeys}
+                  errorKeys={poi.errorKeys}
+                  moved={poi.moved}
+                  onSearchArea={poi.searchArea}
+                  selectedFeature={poi.selectedFeature}
+                  onDismissFeature={poi.clearSelection}
+                  onAddFeature={(feature) => {
+                    openAddPlaceFromPoi(feature)
+                    poi.clearSelection()
+                  }}
+                />
               </div>,
               document.body
             )}

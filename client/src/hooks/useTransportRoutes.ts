@@ -42,7 +42,7 @@ function orderedWaypoints(r: Reservation): ReservationEndpoint[] {
  * Routing runs once per reservation waypoint-set and is cached across the app
  * by RouteCalculator, so day switches and re-renders don't re-fetch.
  */
-export function useTransportRoutes(reservations: Reservation[]): Map<number, [number, number][]> {
+export function useTransportRoutes(reservations: Reservation[], tripId?: number | string): Map<number, [number, number][]> {
   const [routes, setRoutes] = useState<Map<number, [number, number][]>>(new Map())
   // id → waypoint signature already fetched/attempted, so an unchanged booking
   // is never re-requested even as the reservations array identity churns.
@@ -88,7 +88,7 @@ export function useTransportRoutes(reservations: Reservation[]): Map<number, [nu
       // Sequential to stay gentle on the shared public router.
       for (const job of jobs) {
         try {
-          const result = await calculateRouteWithLegs(job.points, { signal: controller.signal, profile: job.profile })
+          const result = await calculateRouteWithLegs(job.points, { signal: controller.signal, profile: job.profile, tripId })
           settledIds.add(job.id)
           if (cancelled) return
           if (result.coordinates.length >= 2) {
@@ -115,7 +115,7 @@ export function useTransportRoutes(reservations: Reservation[]): Map<number, [nu
         if (!settledIds.has(job.id)) attempted.delete(job.id)
       }
     }
-  }, [reservations])
+  }, [reservations, tripId])
 
   return routes
 }

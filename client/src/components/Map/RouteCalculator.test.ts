@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from '../../../tests/helpers/msw/server'
-import { pluginsApi, type PluginRouteResult } from '../../api/client'
+import { pluginsApi, routesApi, type PluginRouteResult } from '../../api/client'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useTripStore } from '../../store/tripStore'
 import {
   calculateRoute,
   calculateRouteWithLegs,
@@ -386,9 +387,34 @@ function pluginRouteResult(over: Partial<PluginRouteResult> = {}): PluginRouteRe
 afterEach(() => {
   vi.restoreAllMocks()
   useSettingsStore.setState({ settings: { ...useSettingsStore.getState().settings, distance_unit: 'metric' } })
+  useTripStore.setState({ trip: null })
 })
 
 describe('calculateRouteWithLegs', () => {
+  it.each([
+    ['driving', 'driving'], ['walking', 'walking'], ['cycling', 'bicycling'], ['electrobike', 'electrobike'],
+  ] as const)('uses Amap %s routing for an explicit Amap Trip', async (profile, routeType) => {
+    useTripStore.setState({ trip: { id: 77, geo_provider: 'amap' } as any })
+    const wps = freshWaypoints()
+    const spy = vi.spyOn(routesApi, 'plan').mockResolvedValue({
+      source: 'amap', routeType,
+      route: {
+        coordinates: [[29.56, 106.55], [29.57, 106.56]], distance: 1400, duration: 600,
+        legs: [{ from: [wps[0].lat, wps[0].lng], to: [wps[1].lat, wps[1].lng], mid: [29.565, 106.555], distance: 1400, duration: 600 }],
+      },
+    })
+    const result = await calculateRouteWithLegs(wps, { profile, tripId: 77 })
+    expect(spy).toHaveBeenCalledWith({ tripId: 77, routeType, waypoints: wps })
+    expect(result.legs[0]).toMatchObject({ distanceText: '1.4 km', durationText: '10 min' })
+  })
+
+  it('falls back to the original OSRM path when Amap road routing fails', async () => {
+    useTripStore.setState({ trip: { id: 78, geo_provider: 'amap' } as any })
+    vi.spyOn(routesApi, 'plan').mockRejectedValue(new Error('quota'))
+    server.use(http.get(`${FOSSGIS.driving}/:coords`, () => HttpResponse.json(buildLegsResponse())))
+    await expect(calculateRouteWithLegs(freshWaypoints(), { tripId: 78 })).resolves.toMatchObject({ distance: 4200 })
+  })
+
   it('FE-COMP-ROUTECALCULATOR-033: returns an empty route for fewer than 2 waypoints without calling OSRM', async () => {
     const result = await calculateRouteWithLegs([wp1])
     expect(result).toEqual({ coordinates: [], distance: 0, duration: 0, legs: [] })

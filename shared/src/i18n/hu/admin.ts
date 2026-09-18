@@ -338,7 +338,8 @@ const admin: TranslationStrings = {
     'A napok színezése a napi tervben (például hogy az út melyik szakaszához tartozik egy nap)',
   'admin.plugins.cap.mcpTools': 'MI-eszközöket tesz közzé',
   'admin.plugins.mcpToolsTitle': 'Közzétett MI-eszközök',
-  'admin.plugins.mcpToolsHint': 'Egy asszisztens futtathatja őket a felhasználó nevében. Mindegyik a fent megadott jogosultságokkal működik.',
+  'admin.plugins.mcpToolsHint':
+    'Egy asszisztens futtathatja őket a felhasználó nevében. Mindegyik a fent megadott jogosultságokkal működik.',
   'admin.plugins.perm.mcp:tools':
     'Olyan eszközök közzététele, amelyeket egy MI-asszisztens futtathat a nevedben (a bővítménynek itt adott jogosultságokkal működik, nem a sajátjával)',
   'admin.plugins.perm.geolocation:read':
@@ -442,7 +443,8 @@ const admin: TranslationStrings = {
   'admin.plugins.changeVersion': 'Verzióváltás…',
   'admin.plugins.noVersions': 'Nem található publikált verzió a jegyzékben.',
   'admin.plugins.downgradeTitle': 'Visszaállítod ezt a bővítményt?',
-  'admin.plugins.downgradeBody': 'Váltás v{from} verzióról v{to} verzióra: az újabb verzió által írt adatok megmaradnak, és a régebbi verzió lehet, hogy nem érti őket.',
+  'admin.plugins.downgradeBody':
+    'Váltás v{from} verzióról v{to} verzióra: az újabb verzió által írt adatok megmaradnak, és a régebbi verzió lehet, hogy nem érti őket.',
   'admin.plugins.downgradeConfirm': 'Visszaállítás',
   'admin.plugins.updatesHeld': 'Frissítések szüneteltetve a v{version} verzión',
   'admin.plugins.resumeUpdates': 'Frissítések folytatása',
@@ -538,7 +540,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.airtrail.name': 'AirTrail',
   'admin.addons.catalog.airtrail.description': 'Járatok szinkronizálása az AirTrail-példányodból',
   'admin.addons.catalog.llm_parsing.name': 'MI-elemzés',
-  'admin.addons.catalog.llm_parsing.description': 'Beolvassa azokat a foglalásokat, amelyeket a beépített értelmező nem tud, az általad választott MI-modellel',
+  'admin.addons.catalog.llm_parsing.description':
+    'Beolvassa azokat a foglalásokat, amelyeket a beépített értelmező nem tud, az általad választott MI-modellel',
   'admin.addons.enabled': 'Engedélyezve',
   'admin.addons.disabled': 'Letiltva',
   'admin.addons.type.trip': 'Utazás',
@@ -685,7 +688,8 @@ const admin: TranslationStrings = {
   'admin.addons.catalog.journey.description':
     'Utazáskövetés és útinapló bejelentkezésekkel, fotókkal és napi történetekkel',
   'admin.addons.catalog.collections.name': 'Gyűjtemények',
-  'admin.addons.catalog.collections.description': 'Gyűjtsd össze bármely utazás helyeit elnevezett listákba, és használd fel őket újra',
+  'admin.addons.catalog.collections.description':
+    'Gyűjtsd össze bármely utazás helyeit elnevezett listákba, és használd fel őket újra',
   'admin.passkey.title': 'Passkey-bejelentkezés',
   'admin.passkey.cardHint':
     'Engedélyezd a felhasználóknak a bejelentkezést passkey-vel (WebAuthn). Alapból kikapcsolva.',

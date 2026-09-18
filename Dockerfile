@@ -51,14 +51,15 @@ COPY server/package.json ./server/
 # changeset, so it costs nothing. Everything copied after this point carries
 # --chown=node:node for the same reason — a recursive chown in a later layer
 # would copy up every inode it touches and duplicate the whole tree in the image.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends tzdata dumb-init wget ca-certificates python3 build-essential \
+RUN apt-get -o Acquire::Retries=5 update && \
+    apt-get -o Acquire::Retries=5 install -y --no-install-recommends tzdata dumb-init wget ca-certificates python3 build-essential \
     libkitinerary-bin && \
     npm ci --workspace=server --omit=dev && \
-    ln -sf "$(find /usr/lib -name kitinerary-extractor -type f | head -1)" /usr/local/bin/kitinerary-extractor; \
+    ln -sf "$(find /usr/lib -name kitinerary-extractor -type f | head -1)" /usr/local/bin/kitinerary-extractor && \
     apt-get purge -y python3 build-essential && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx && \
+    test -x /usr/bin/dumb-init && \
     chown -R node:node /app
 
 # gosu rebuilt with a current Go toolchain (stage 0) — used by CMD to drop to node.
@@ -116,7 +117,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/health || exit 1
 
-ENTRYPOINT ["dumb-init", "--"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 # Preflight: if the app code is missing, a volume was almost certainly mounted
 # over /app (it hides the image's node_modules + dist). Fail with actionable
 # guidance instead of a cryptic "Cannot find module 'tsconfig-paths/register'".

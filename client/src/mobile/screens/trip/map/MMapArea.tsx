@@ -14,9 +14,9 @@ import type { MMapAreaProps } from '../MTripShell'
  *
  * The map itself is the shared planner renderer (Leaflet or GL, per user
  * setting) with the full desktop feature set: clusters, photo/icon markers,
- * day-order badges, dashed day route, transport overlays per booking, POI
- * explore markers and long-press → add place. Only the floating chrome is
- * mobile: the POI bar spans the full width below the day-chip rail, and the two
+ * day-order badges, dashed day route, transport overlays per booking, map
+ * discovery layers and long-press → add place. Only the floating chrome is
+ * mobile: the discovery bar spans the full width below the day-chip rail, and the two
  * round controls share the band just above the dock — the compass on the left,
  * the map's built-in three-state locate button on the right, both riding the
  * --bottom-nav-h contract the map already reads so they cannot drift apart.
@@ -26,7 +26,7 @@ import type { MMapAreaProps } from '../MTripShell'
  * same set the places browser renders, so the two can't desync.
  */
 export default function MMapArea({ planner, shell }: MMapAreaProps) {
-  const poi = usePoiExplore()
+  const poi = usePoiExplore(planner.tripId)
   const [glMap, setGlMap] = useState<CompassMap | null>(null)
   const poiPillEnabled = useSettingsStore(s => s.settings.map_poi_pill_enabled) !== false
 
@@ -45,6 +45,7 @@ export default function MMapArea({ planner, shell }: MMapAreaProps) {
         places={planner.mapPlaces}
         dayPlaces={planner.dayPlaces}
         route={planner.route}
+        routeProfile={planner.routeProfile}
         routeVias={planner.routeVias}
         showTransitRoutes={planner.transitRoutesShown}
         // The route toggle belongs to one day, so the map needs that day to know
@@ -66,12 +67,12 @@ export default function MMapArea({ planner, shell }: MMapAreaProps) {
         dayOrderMap={planner.dayOrderMap}
         reservations={planner.reservations}
         showReservationStats={true}
-        visibleConnectionIds={planner.visibleConnections}
+        visibleConnectionIds={planner.mapVisibleConnections}
         // Transport overlay tap → the mobile transport detail sheet (desktop
         // routes this through mapTransportDetail into the day sidebar instead).
         onReservationClick={(rid: number) => shell.openSheet('transport', { reservationId: rid })}
         pois={poi.pois}
-        onPoiClick={marker => planner.openAddPlaceFromPoi(marker, planner.selectedDayId)}
+        onPoiClick={poi.selectFeature}
         onViewportChange={poi.onViewportChange}
         onMapReady={setGlMap}
       />
@@ -90,6 +91,12 @@ export default function MMapArea({ planner, shell }: MMapAreaProps) {
             errorKeys={poi.errorKeys}
             moved={poi.moved}
             onSearchArea={poi.searchArea}
+            selectedFeature={poi.selectedFeature}
+            onDismissFeature={poi.clearSelection}
+            onAddFeature={(feature) => {
+              planner.openAddPlaceFromPoi(feature, planner.selectedDayId)
+              poi.clearSelection()
+            }}
           />
         </div>
       )}

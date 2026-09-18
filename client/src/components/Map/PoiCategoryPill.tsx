@@ -1,7 +1,7 @@
-import { RotateCw, AlertTriangle } from 'lucide-react'
+import { RotateCw, AlertTriangle, Layers3, Plus, X } from 'lucide-react'
 import { useTranslation } from '../../i18n'
 import { Tooltip } from '../shared/Tooltip'
-import { POI_CATEGORIES } from './poiCategories'
+import { MAP_DISCOVERY_LAYERS, type MapDiscoveryFeature } from './poiCategories'
 
 interface Props {
   active: Set<string>
@@ -12,6 +12,9 @@ interface Props {
   /** true when the map moved since the last search → offer "search this area" */
   moved?: boolean
   onSearchArea?: () => void
+  selectedFeature?: MapDiscoveryFeature | null
+  onAddFeature?: (feature: MapDiscoveryFeature) => void
+  onDismissFeature?: () => void
   /** Stretch the bar across its container and spread the segments evenly.
    *  The phone map gives it the full width between the screen margins; on
    *  desktop it floats, so it stays content-width there. */
@@ -21,7 +24,10 @@ interface Props {
 // Frosted, icon-only segmented control that floats over the map. Active segments
 // fill with the category colour (matching their markers); the label shows in a
 // custom tooltip on hover so the pill stays compact and never needs to scroll.
-export default function PoiCategoryPill({ active, onToggle, loadingKeys, errorKeys, moved, onSearchArea, fullWidth }: Props) {
+export default function PoiCategoryPill({
+  active, onToggle, loadingKeys, errorKeys, moved, onSearchArea,
+  selectedFeature, onAddFeature, onDismissFeature, fullWidth,
+}: Props) {
   const { t } = useTranslation()
   const anyError = !!errorKeys && Array.from(active).some(k => errorKeys.has(k))
 
@@ -39,7 +45,16 @@ export default function PoiCategoryPill({ active, onToggle, loadingKeys, errorKe
         alignSelf: fullWidth ? 'stretch' : undefined,
         alignItems: 'center', gap: 2, padding: 4, borderRadius: 999, pointerEvents: 'auto', ...frosted,
       }}>
-        {POI_CATEGORIES.map(cat => {
+        <Tooltip label={t('poi.discoveryLayers')} placement="bottom">
+          <span
+            aria-hidden="true"
+            className="text-content-muted"
+            style={{ width: 28, height: 34, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            <Layers3 size={15} strokeWidth={2} />
+          </span>
+        </Tooltip>
+        {MAP_DISCOVERY_LAYERS.map(cat => {
           const on = active.has(cat.key)
           // Only an active category can be loading — a deselected one whose fetch
           // is still winding down must not keep spinning.
@@ -90,6 +105,62 @@ export default function PoiCategoryPill({ active, onToggle, loadingKeys, errorKe
           )
         })}
       </div>
+
+      {selectedFeature && (
+        <div
+          data-testid="map-discovery-card"
+          className="text-content"
+          style={{
+            width: fullWidth ? '100%' : 280,
+            maxWidth: 'calc(100vw - 32px)',
+            padding: '10px 11px',
+            borderRadius: 12,
+            pointerEvents: 'auto',
+            boxSizing: 'border-box',
+            ...frosted,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {selectedFeature.name}
+              </div>
+              {selectedFeature.address && (
+                <div className="text-content-muted" style={{ marginTop: 2, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {selectedFeature.address}
+                </div>
+              )}
+              <div className="text-content-muted" style={{ marginTop: 4, fontSize: 10 }}>
+                {t('poi.auxiliarySource', { source: selectedFeature.source === 'amap' ? 'AMap' : selectedFeature.source })}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onDismissFeature}
+              aria-label={t('common.close')}
+              className="text-content-muted"
+              style={{ padding: 2, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex' }}
+            >
+              <X size={15} />
+            </button>
+          </div>
+          {onAddFeature && (
+            <button
+              type="button"
+              onClick={() => onAddFeature(selectedFeature)}
+              style={{
+                marginTop: 9, width: '100%', height: 30, border: 'none', borderRadius: 8,
+                background: 'var(--accent, #4f46e5)', color: '#fff', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                font: '600 12px var(--font-system)',
+              }}
+            >
+              <Plus size={14} />
+              {t('poi.addToTrip')}
+            </button>
+          )}
+        </div>
+      )}
 
       {(moved || anyError) && active.size > 0 && (
         <button

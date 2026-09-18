@@ -86,7 +86,8 @@ const places: TranslationStrings = {
   'places.loadingDetails': 'Φόρτωση λεπτομερειών μέρους…',
   'places.osmHint':
     'Χρήση αναζήτησης OpenStreetMap (χωρίς φωτογραφίες, ώρες λειτουργίας ή αξιολογήσεις). Προσθέστε ένα κλειδί Google API στις ρυθμίσεις για πλήρεις λεπτομέρειες.',
-  'places.osmActive': 'Χρησιμοποιείται το OpenStreetMap. Ένα κλειδί Google API προσθέτει αξιολογήσεις και ωράρια.',
+'places.osmActive': 'Χρησιμοποιείται το OpenStreetMap. Ένα κλειδί Google API προσθέτει αξιολογήσεις και ωράρια.',
+  'places.amapActive': 'Using Amap for mainland China place search.',
   'places.details.title': 'Λεπτομέρειες τοποθεσίας',
   'places.details.empty': 'Διάλεξε ένα αποτέλεσμα για να δεις εικόνες και περιγραφή.',
   'places.details.loading': 'Φόρτωση λεπτομερειών...',
@@ -100,7 +101,8 @@ const places: TranslationStrings = {
   'places.details.facts': 'Καλό να ξέρεις',
   'places.details.nothing': 'Δεν βρέθηκε τίποτα για αυτήν την τοποθεσία.',
   'places.details.noKeyTitle': 'Διατίθενται περισσότερες λεπτομέρειες',
-  'places.details.noKeyHint': 'Χωρίς κλειδί Google API, αυτή η εγκατάσταση χρησιμοποιεί μόνο ελεύθερες πηγές. Ζητήστε από τον διαχειριστή TREK να προσθέσει ένα για βαθμολογίες, ώρες λειτουργίας και φωτογραφίες.',
+  'places.details.noKeyHint':
+    'Χωρίς κλειδί Google API, αυτή η εγκατάσταση χρησιμοποιεί μόνο ελεύθερες πηγές. Ζητήστε από τον διαχειριστή TREK να προσθέσει ένα για βαθμολογίες, ώρες λειτουργίας και φωτογραφίες.',
   'places.details.aboutBrand': 'Σχετικά με την αλυσίδα',
   'places.details.aboutBrandNote': 'Περιγράφει την αλυσίδα, όχι αυτό το κατάστημα.',
   'places.details.fact.rating': 'Βαθμολογία',

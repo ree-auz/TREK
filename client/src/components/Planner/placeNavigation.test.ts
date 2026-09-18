@@ -30,7 +30,7 @@ afterEach(() => { vi.restoreAllMocks() })
 describe('getNavigationTargets', () => {
   it('FE-PLANNER-NAV-001: offers every app that can resolve a place with coordinates', () => {
     const targets = getNavigationTargets(place())
-    expect(targets.map(t => t.id)).toEqual(['google', 'waze', 'apple', 'osm', 'comaps'])
+    expect(targets.map(t => t.id)).toEqual(['google', 'amap', 'baidu', 'waze', 'apple', 'osm', 'comaps'])
     expect(targets[0].label).toBe('Google Maps')
   })
 
@@ -58,7 +58,7 @@ describe('getNavigationTargets', () => {
   it('FE-PLANNER-NAV-004b: an Android phone does not, because nobody there wants it', () => {
     const restore = withUserAgent('Mozilla/5.0 (Linux; Android 15; Pixel 9)')
     try {
-      expect(getNavigationTargets(place()).map(t => t.id)).toEqual(['google', 'waze', 'osm', 'comaps'])
+      expect(getNavigationTargets(place()).map(t => t.id)).toEqual(['google', 'amap', 'baidu', 'waze', 'osm', 'comaps'])
     } finally { restore() }
   })
 
@@ -66,9 +66,9 @@ describe('getNavigationTargets', () => {
     const restore = withUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)')
     try {
       const targets = getNavigationTargets(place())
-      expect(targets.map(t => t.id)).toEqual(['google', 'waze', 'apple', 'osm', 'comaps'])
+      expect(targets.map(t => t.id)).toEqual(['google', 'amap', 'baidu', 'waze', 'apple', 'osm', 'comaps'])
       // q next to ll labels the pin rather than searching blindly.
-      expect(targets[2].url).toBe('https://maps.apple.com/?q=Stephansdom&ll=48.2038,16.3616')
+      expect(targets.find(t => t.id === 'apple')!.url).toBe('https://maps.apple.com/?q=Stephansdom&ll=48.2038,16.3616')
     } finally { restore() }
   })
 
@@ -101,8 +101,17 @@ describe('getNavigationTargets', () => {
 
   it('FE-PLANNER-NAV-009: a nameless place still reaches every app, just without a label', () => {
     const targets = getNavigationTargets(place({ name: '' }))
-    expect(targets.map(t => t.id)).toEqual(['google', 'waze', 'apple', 'osm', 'comaps'])
+    expect(targets.map(t => t.id)).toEqual(['google', 'amap', 'baidu', 'waze', 'apple', 'osm', 'comaps'])
     expect(targets.find(t => t.id === 'waze')!.url).toBe('https://waze.com/ul?ll=48.2038,16.3616&navigate=yes')
+  })
+
+  it('FE-PLANNER-NAV-010: Amap and Baidu receive the stored GCJ-02 position in their documented order', () => {
+    const targets = getNavigationTargets(place({ address: 'Stephansplatz 3' }))
+    const amap = targets.find(t => t.id === 'amap')!
+    const baidu = targets.find(t => t.id === 'baidu')!
+
+    expect(amap.url).toBe('https://uri.amap.com/marker?position=16.3616,48.2038&name=Stephansdom&src=trek&coordinate=gaode&callnative=1')
+    expect(baidu.url).toBe('https://api.map.baidu.com/marker?location=48.2038,16.3616&title=Stephansdom&content=Stephansplatz%203&output=html&coord_type=gcj02&src=webapp.trek.app')
   })
 })
 

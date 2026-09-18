@@ -85,6 +85,7 @@ const places: TranslationStrings = {
   'places.loadingDetails': '正在加载地点详情…',
   'places.osmHint': '使用 OpenStreetMap 搜索（无照片、营业时间或评分）。在设置中添加 Google API 密钥以获取完整信息。',
   'places.osmActive': '正在使用 OpenStreetMap。添加 Google API 密钥可获得评分和营业时间。',
+  'places.amapActive': '正在使用高德地图搜索中国大陆地点。',
   'places.details.title': '地点详情',
   'places.details.empty': '选择一条搜索结果即可查看图片和描述。',
   'places.details.loading': '正在加载详情...',
@@ -98,7 +99,8 @@ const places: TranslationStrings = {
   'places.details.facts': '值得一看',
   'places.details.nothing': '未找到该地点的信息。',
   'places.details.noKeyTitle': '可获取更多详情',
-  'places.details.noKeyHint': '没有 Google API 密钥时，此实例仅使用免费来源。请联系 TREK 管理员添加密钥，以获取评分、营业时间和照片。',
+  'places.details.noKeyHint':
+    '没有 Google API 密钥时，此实例仅使用免费来源。请联系 TREK 管理员添加密钥，以获取评分、营业时间和照片。',
   'places.details.aboutBrand': '关于该连锁品牌',
   'places.details.aboutBrandNote': '描述的是连锁品牌，而非本门店。',
   'places.details.fact.rating': '评分',

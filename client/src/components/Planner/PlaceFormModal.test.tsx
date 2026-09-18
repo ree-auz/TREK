@@ -355,6 +355,22 @@ describe('PlaceFormModal', () => {
     expect(screen.getByText(/OpenStreetMap/i)).toBeInTheDocument();
   });
 
+  it('shows Amap as the active provider after an Amap autocomplete response', async () => {
+    server.use(
+      http.post('/api/maps/autocomplete', () =>
+        HttpResponse.json({
+          suggestions: [{ placeId: 'amap:B002', mainText: 'Eiffel', secondaryText: 'Paris, France' }],
+          source: 'amap',
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    render(<PlaceFormModal {...defaultProps} />);
+    await openSuggestion(user);
+    expect(screen.getByText(/Using Amap/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Using OpenStreetMap/i)).not.toBeInTheDocument();
+  });
+
   // ── Category ─────────────────────────────────────────────────────────────────
 
   it('FE-PLANNER-PLACEFORM-023: category selector renders options', () => {
